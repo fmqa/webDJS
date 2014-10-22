@@ -27,6 +27,7 @@ module WebDJS {
 			private y : number;
 			private array : Float32Array = new Float32Array(12);
 			constructor(width : number = 0, height : number = 0, x : number = 0, y : number = 0) {
+				this.translate(x, y);
 				this.resize(width, height);
 			}
 			translate(x, y : number) : void {
