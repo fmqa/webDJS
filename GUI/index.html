@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>WebDjs_Version1-DarkGray</title>
+		<link rel="stylesheet" type="text/css" href="stylesheet/style.css">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	</head>
+	<body>
+	<!-- VIDEO -->
+	<section class="video_sec">
+		--Für Video --
+	</section>
+	<table>
+		<tr>
+			<td>
+				<!-- RENDER -->
+				<section class="setups">
+					-Renderer-
+						<table>
+							<fieldset>
+							<tr>
+								<td>
+									<input type="radio" id="cube">Würfel					
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<input type="radio" id="circle">Kugel
+								</td>
+							</tr>
+						</fieldset>	
+					</table>
+				</section>
+				</td>
+				<td>
+				<!-- FILTER -->
+				<section class="setups">
+					<table>
+						<tr>
+							<td>
+								-Filter-
+								<table>
+									<tr>
+										<td>
+											<input type="checkbox" id="sobel">Sobel
+										<td>
+									</tr>
+									<tr>
+										<td>
+											<input type="checkbox" id="rgb">RGB
+										</td>
+									</tr>
+								</table>	
+							</td>
+							<td>
+								-Parameter-
+								<table>
+									<tr>
+										<td>
+											<input type="number" min="0" class="filterinput" id="sobel-parameter" value="0">
+										</td>
+									</tr>
+									<tr>
+										<td>
+											<input type="number" min="0" class="filterinput" id="rgb-parameter" value="0">
+										</td>
+										</tr>
+								</table>
+							</td>
+						</tr>
+					</table>
+				</section>
+			</td>
+		</tr>
+	</table>
+	<!-- AUDIO -->
+	<section class="setups">
+		--Audio Controls--
+		<table>
+			<tr>
+				<td>
+					-Volume-
+					<input type="range" min="0" max="100" id="vol" value="20">
+				</td>
+			</tr>
+			<tr>		
+				<td>
+					-Speed-
+						<input type="range" min="0" max= "200" id="audiospeed" value="100">
+				</td>
+			</tr>	
+		</table>
+	</section>
+	
+	</body>
+</html>

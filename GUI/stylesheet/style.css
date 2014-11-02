@@ -1,0 +1,43 @@
+body {
+	background-color: #2C3539;
+}
+
+section {
+	background-color: #071019;
+}
+
+fieldset {
+	border: none;
+}
+
+table tr td {
+	vertical-align: top;
+}
+
+.video_sec {
+	width: 500px;
+	height: 300px;
+	border: 1px solid gray;
+	
+	/* Demo Teil */
+	font-size: 20px;
+	color: gray;
+	text-align: center;
+	line-height: 250px;
+}
+
+.setups {
+	width: 200px;
+	height: auto;
+	border: 1px solid gray;
+	
+	text-align: west;
+	font-size: 15px;
+	color: gray;
+	
+}
+
+.filterinput {
+	width: 40px;
+}
+
