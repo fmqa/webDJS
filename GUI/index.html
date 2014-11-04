@@ -10,78 +10,106 @@
 	<body>
 		<!-- VIDEO -->
 		<section class="video_sec">
-			--Für Video --
+			<div class="videoDiv">
+				--Für Video --
+			</div>
 		</section>
-		<section class="setups">
-			--Audio Controls--
-			<table>
-				<tr>
-					<td>
-						-Volume-
-						<input type="range" min="0" max="100" id="vol" value="20">
-					</td>
-				</tr>
-				<tr>		
-					<td>
-						-Speed-
-							<input type="range" min="0" max= "200" id="audiospeed" value="100">
-					</td>
-				</tr>	
-			</table>
-		</section>
-		<!-- FILTER -->
-		<section class="setups">
-			<table>
-				<tr>
-					<td>
-						-Filter-
-						<table>
-							<tr>
-								<td>
-									<input type="checkbox" id="sobel">Sobel
-								<td>
-							</tr>
-							<tr>
-								<td>
-									<input type="checkbox" id="rgb">RGB
-								</td>
-							</tr>
-						</table>	
-					</td>
-					<td>
-						-Parameter-
-						<table>
-							<tr>
-								<td>
-									<input type="number" min="0" class="filterinput" id="sobel-parameter" value="0">
-								</td>
-							</tr>
-							<tr>
-								<td>
-									<input type="number" min="0" class="filterinput" id="rgb-parameter" value="0">
-								</td>
-								</tr>
-						</table>
-					</td>
-				</tr>
-			</table>
-		</section>
-		<!-- RENDERER -->
-		<section class="setups">
-			-Renderer-
-				<table>
-					<tr>
-						<td>
-							<input type="radio" name="renderradio" id="cube">Würfel					
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<input type="radio" name="renderradio" id="circle">Kugel
-						</td>
-					</tr>
-			</table>
-		</section>
+		<section class="setupsSection">
+				<div class="setupDiv">
+					<table>
+						<tr>
+							<td>
+								<div class="panel panel-default">
+									<div class="panel-heading">Audio Controls</div>
+									<table class="table">
+										<tr>
+											<td>
+												-Volume-
+												<input type="range" min="0" max="100" id="vol" value="20">
+											</td>
+										</tr>
+										<tr>		
+											<td>
+												-Speed-
+													<input type="range" min="0" max= "200" id="audiospeed" value="100">
+											</td>
+										</tr>	
+									</table>
+								</section>
+							</td>
+							<td>
+								<!-- FILTER -->
+								<div class="setups">
+									<table>
+										<tr>
+											<td>
+												-Filter-
+												<table>
+													<tr>
+														<td>
+															<input type="checkbox" id="sobel">Sobel
+														</td>
+														<td>
+															<input type="number" min="0" class="filterinput" id="sobel-parameter" value="0">
+														</td>
+													</tr>
+													<tr>
+														<td>
+															<input type="checkbox" id="rgb">RGB
+														</td>
+													</tr>
+													<tr>
+														<td>
+															<input type="range" min="0" max= "255" id="R-bar" value="50">
+														</td>
+														<td>
+															<input type="number" min="0" class="filterinput" id="R-parameter" value="0">
+														</td>
+													</tr>
+													<tr>
+														<td>
+															<input type="range" min="0" max= "255" id="G-bar" value="50">
+														</td>
+														<td>
+															<input type="number" min="0" class="filterinput" id="G-parameter" value="0">
+														</td>
+													</tr>
+													<tr>
+														<td>
+															<input type="range" min="0" max= "255" id="B-bar" value="50">
+														</td>
+														<td>
+															<input type="number" min="0" class="filterinput" id="B-parameter" value="0">
+														</td>
+													</tr>
+												</table>	
+											</td>
+										</tr>
+									</table>
+								</section>
+							</td>
+							<td>
+								<!-- RENDERER -->
+								<div class="setups">
+									-Renderer-
+										<table>
+											<tr>
+												<td>
+													<input type="radio" name="renderradio" id="cube">Würfel					
+												</td>
+											</tr>
+											<tr>
+												<td>
+													<input type="radio" name="renderradio" id="circle">Kugel
+												</td>
+											</tr>
+									</table>
+								</section>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</section>		
 		<!-- <script src="js/"></script> -->
 	</body>
 </html>
