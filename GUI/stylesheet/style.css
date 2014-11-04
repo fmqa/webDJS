@@ -1,9 +1,11 @@
 body {
 	background-color: #2C3539;
+	margin: 5px;
 }
 
 section {
 	background-color: #071019;
+	padding-left: 5px;
 }
 
 table tr td {
@@ -34,6 +36,8 @@ table tr td {
 }
 
 .filterinput {
-	width: 40px;
+	width: 30px;
+	height: 25px;
+	margin-left: 5px;
 }
 
