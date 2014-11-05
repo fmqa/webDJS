@@ -62,3 +62,7 @@ table tr td {
 	display: inline-block;
 }
 
+.setupHead {
+	background-image: linear-gradient(to bottom, #2C3539 0px, black 100%) !important;
+	color: lightgray !important;
+}
