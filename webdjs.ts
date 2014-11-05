@@ -63,6 +63,8 @@ module WebDJS {
 		    private indexBuffer : WebGLBuffer;
 		    constructor(vertexBuffer : WebGLBuffer = null, indexBuffer : WebGLBuffer = null) {
 		        this.bind(vertexBuffer, indexBuffer);
+		        this.translate(0, 0);
+		        this.resize(1, 1);
 		    }
 		    bind(vertexBuffer : WebGLBuffer, indexBuffer : WebGLBuffer) : void {
 		        this.vertexBuffer = vertexBuffer;
@@ -109,8 +111,8 @@ module WebDJS {
             private vertexArray : RectangularVertexArrayOp;
             private rgba : Float32Array = new Float32Array([1,1,1,1]);
             private initialized : boolean = false;
-            private dirty : boolean = false;
-            private recolor : boolean = false;
+            private dirty : boolean = true;
+            private recolor : boolean = true;
             image(img : HTMLImageElement) : void {
                 if (!this.initialized) {
                     return;
@@ -168,9 +170,6 @@ module WebDJS {
                 this.vertexBuffer = gl.createBuffer();
                 this.indexBuffer = gl.createBuffer();
                 this.vertexArray = new RectangularVertexArrayOp(this.vertexBuffer, this.indexBuffer);
-                this.vertexArray.translate(0, 0);
-                this.vertexArray.resize(1, 1);
-                this.vertexArray.apply(gl);
                 
                 this.texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, this.texture);        
