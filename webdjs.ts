@@ -4,7 +4,7 @@ module WebDJS {
 	     * Generic OpenGL operation.
 	     */
         export interface GLOp {
-	        apply(WebGLRenderingContext) : void;
+	        apply(gl : WebGLRenderingContext) : void;
         }
 		
 		/**
@@ -64,11 +64,11 @@ module WebDJS {
 		    constructor(vertexBuffer : WebGLBuffer = null, indexBuffer : WebGLBuffer = null) {
 		        this.bind(vertexBuffer, indexBuffer);
 		    }
-		    bind(vertexBuffer, indexBuffer : WebGLBuffer) : void {
+		    bind(vertexBuffer : WebGLBuffer, indexBuffer : WebGLBuffer) : void {
 		        this.vertexBuffer = vertexBuffer;
 		        this.indexBuffer = indexBuffer;
 		    }
-		    translate(x, y : number) : void {
+		    translate(x : number, y : number) : void {
 			    this.x = x;
 			    this.y = y;
 			    this.vertices[0] = this.x;
@@ -76,7 +76,7 @@ module WebDJS {
 			    this.vertices[3] = this.y;
 			    this.vertices[6] = this.x;
 		    }
-		    resize(width, height : number) : void {
+		    resize(width : number, height : number) : void {
 			    this.width = width;
 			    this.height = height;
 			    this.vertices[2] = this.x + this.width;
@@ -103,11 +103,14 @@ module WebDJS {
 		    private texture : WebGLTexture;
 		    private xyAttribLocation : number;
 		    private samplerAttribLocation : WebGLUniformLocation;
+		    private rgbaAttribLocation : WebGLUniformLocation;
 		    private vertexBuffer : WebGLBuffer;
 		    private indexBuffer : WebGLBuffer;
 		    private vertexArray : RectangularVertexArrayOp;
+		    private rgba : Float32Array = new Float32Array([1,1,1,1]);
 		    private initialized : boolean = false;
 		    private dirty : boolean = false;
+		    private recolour : boolean = false;
 		    image(img : HTMLImageElement) : void {
 		        if (!this.initialized) {
 		            return;
@@ -139,10 +142,11 @@ module WebDJS {
                 gl.shaderSource(this.fragmentShader,
                     "precision mediump float;" +
                     "uniform sampler2D sampler;" +
+                    "uniform vec4 rgba;" +
                     "varying vec2 txy;" +
                     "void main() {" +
                     "   vec4 texColor = texture2D(sampler, txy);" +
-                    "   gl_FragColor = vec4(texColor.r, texColor.g, texColor.b, 1);" +
+                    "   gl_FragColor = texColor * rgba;" +
                     "}");
                 gl.compileShader(this.fragmentShader);
 
@@ -158,9 +162,15 @@ module WebDJS {
                 this.samplerAttribLocation = gl.getUniformLocation(this.shaderProgram, "sampler");
                 gl.uniform1i(this.samplerAttribLocation, 0);
                 
+                this.rgbaAttribLocation = gl.getUniformLocation(this.shaderProgram, "rgba");
+                gl.uniform4fv(this.rgbaAttribLocation, this.rgba);
+                
                 this.vertexBuffer = gl.createBuffer();
                 this.indexBuffer = gl.createBuffer();
                 this.vertexArray = new RectangularVertexArrayOp(this.vertexBuffer, this.indexBuffer);
+                this.vertexArray.translate(0, 0);
+                this.vertexArray.resize(1, 1);
+                this.vertexArray.apply(gl);
                 
                 this.texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, this.texture);        
@@ -171,13 +181,20 @@ module WebDJS {
                 
                 this.initialized = true;
 		    }
-		    translate(x, y : number) : void {
+		    translate(x : number, y : number) : void {
 		        this.vertexArray.translate(x, y);
 		        this.dirty = true;
 		    }
-		    resize(width, height : number) : void {
+		    resize(width : number, height : number) : void {
 		        this.vertexArray.resize(width, height);
 		        this.dirty = true;
+		    }
+		    scaleRgba(r : number, g : number, b : number, a : number) : void {
+		        this.rgba[0] = r;
+		        this.rgba[1] = g;
+		        this.rgba[2] = b;
+		        this.rgba[3] = a;
+		        this.recolour = true;
 		    }
 		    apply(gl : WebGLRenderingContext) : void {
 		        if (!this.initialized) {
@@ -190,6 +207,12 @@ module WebDJS {
 		        
 		        if (this.dirty) {
 		            this.vertexArray.apply(gl);
+		            this.dirty = false;
+		        }
+		        
+		        if (this.recolour) {
+		            gl.uniform4fv(this.rgbaAttribLocation, this.rgba);
+		            this.recolour = false;
 		        }
 		        
 		        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
