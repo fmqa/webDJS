@@ -20,7 +20,7 @@ module WebDJS {
         export class GLImageInput implements GLTextureOperation {
 	        private source : HTMLImageElement;
 	        private texture : WebGLTexture;
-	        private loaded : boolean;
+	        private context : WebGLRenderingContext;
 	        constructor(source : HTMLImageElement, texture : WebGLTexture = null) { 
 	            this.source = source; 
 	            this.bind(texture);
@@ -30,14 +30,14 @@ module WebDJS {
 	            this.reload();
 	        }
 	        reload() : void {
-	            this.loaded = false;
+	            this.context = null;
 	        }
 	        apply(gl : WebGLRenderingContext) : void {
 	            gl.activeTexture(gl.TEXTURE0);
 	            gl.bindTexture(gl.TEXTURE_2D, this.texture);
-	            if (!this.loaded) {
+	            if (gl !== this.context) {
     		        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.source);
-    		        this.loaded = true;
+    		        this.context = gl;
     		    }
 	        }
         }
@@ -48,7 +48,7 @@ module WebDJS {
 	    export class GLVideoInput implements GLTextureOperation {
 		    private source : HTMLVideoElement;
 		    private texture : WebGLTexture;
-		    private loaded : boolean;
+		    private context : WebGLRenderingContext;
 		    constructor(source : HTMLVideoElement, texture : WebGLTexture = null) { 
 		        this.source = source; 
 		        this.bind(texture);
@@ -58,14 +58,14 @@ module WebDJS {
 		        this.reload();
 		    }
 		    reload() : void {
-		        this.loaded = false;
+		        this.context = null;
 		    }
 		    apply(gl : WebGLRenderingContext) : void {
 		        gl.activeTexture(gl.TEXTURE0);
 		        gl.bindTexture(gl.TEXTURE_2D, this.texture);
-		        if (!this.loaded) {
+		        if (gl !== this.context) {
     			    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.source);
-    			    this.loaded = true;
+    			    this.context = gl;
     			}
 		    }
 	    }
@@ -85,7 +85,7 @@ module WebDJS {
 		    private vertexBuffer : WebGLBuffer;
 		    private indexBuffer : WebGLBuffer;
 		    private changed : boolean;
-		    private loaded : boolean = false;
+		    private context : WebGLRenderingContext;
 		    constructor(vertexBuffer : WebGLBuffer = null, indexBuffer : WebGLBuffer = null) {
 		        this.bind(vertexBuffer, indexBuffer);
 		        this.translate(0, 0);
@@ -95,7 +95,7 @@ module WebDJS {
 		        this.vertexBuffer = vertexBuffer;
 		        this.indexBuffer = indexBuffer;
 		        this.changed = true;
-		        this.loaded = false;
+		        this.context = null;
 		    }
 		    translate(x : number, y : number) : void {
 			    this.x = x;
@@ -117,14 +117,14 @@ module WebDJS {
 		    }
 		    apply(gl : WebGLRenderingContext) : void {
 			    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-			    if (this.changed) {
+			    if (this.changed || gl !== this.context) {
     			    gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.STATIC_DRAW);
     			    this.changed = false;
     			}
 			    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-			    if (!this.loaded) {
+			    if (gl !== this.context) {
     			    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
-    			    this.loaded = true;
+    			    this.context = gl;
     			}
 		    }
 	    }
@@ -137,7 +137,7 @@ module WebDJS {
             private vertexShader : WebGLShader;
             private fragmentShader : WebGLShader;
             private shaderProgram : WebGLProgram;
-            private glTexture : WebGLTexture;
+            private tex : WebGLTexture;
             private xyAttribLocation : number;
             private samplerAttribLocation : WebGLUniformLocation;
             private rgbaAttribLocation : WebGLUniformLocation;
@@ -145,7 +145,7 @@ module WebDJS {
             private indexBuffer : WebGLBuffer;
             private vertexArray : GLRectangleVertexArray = new GLRectangleVertexArray();
             private rgba : Float32Array = new Float32Array([1,1,1,1]);
-            private initialized : boolean = false;
+            private context : WebGLRenderingContext;
             private recolor : boolean = true;
             private rebind : boolean = false;
             constructor(texOp : GLTextureOperation = null) {
@@ -169,7 +169,7 @@ module WebDJS {
                 this.recolor = true;
             }
             apply(gl : WebGLRenderingContext) : void {
-                if (!this.initialized) {
+                if (gl !== this.context) {
                     this.vertexShader = gl.createShader(gl.VERTEX_SHADER);
                     gl.shaderSource(this.vertexShader, 
                         "attribute vec2 vxy;" +
@@ -211,18 +211,16 @@ module WebDJS {
                     this.indexBuffer = gl.createBuffer();
                     this.vertexArray.bind(this.vertexBuffer, this.indexBuffer);
                     
-                    this.glTexture = gl.createTexture();
-                    gl.bindTexture(gl.TEXTURE_2D, this.glTexture);        
+                    this.tex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.tex);        
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                    
-                    this.initialized = true;
                 }
                 
                 if (this.rebind) {
-                    this.texOp.bind(this.glTexture);
+                    this.texOp.bind(this.tex);
                     this.rebind = false;
                 }
                 
@@ -231,9 +229,13 @@ module WebDJS {
                 this.texOp.apply(gl);
                 this.vertexArray.apply(gl);
                 
-                if (this.recolor) {
+                if (this.recolor || gl !== this.context) {
                     gl.uniform4fv(this.rgbaAttribLocation, this.rgba);
                     this.recolor = false;
+                }
+                
+                if (gl !== this.context) {
+                    this.context = gl;
                 }
                 
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);

@@ -16,14 +16,14 @@ var WebDJS;
                 this.reload();
             };
             GLImageInput.prototype.reload = function () {
-                this.loaded = false;
+                this.context = null;
             };
             GLImageInput.prototype.apply = function (gl) {
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, this.texture);
-                if (!this.loaded) {
+                if (gl !== this.context) {
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.source);
-                    this.loaded = true;
+                    this.context = gl;
                 }
             };
             return GLImageInput;
@@ -43,14 +43,14 @@ var WebDJS;
                 this.reload();
             };
             GLVideoInput.prototype.reload = function () {
-                this.loaded = false;
+                this.context = null;
             };
             GLVideoInput.prototype.apply = function (gl) {
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, this.texture);
-                if (!this.loaded) {
+                if (gl !== this.context) {
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.source);
-                    this.loaded = true;
+                    this.context = gl;
                 }
             };
             return GLVideoInput;
@@ -67,7 +67,6 @@ var WebDJS;
                 if (indexBuffer === void 0) { indexBuffer = null; }
                 this.vertices = new Float32Array(8);
                 this.indices = new Uint16Array([0, 1, 2, 0, 2, 3]);
-                this.loaded = false;
                 this.bind(vertexBuffer, indexBuffer);
                 this.translate(0, 0);
                 this.resize(1, 1);
@@ -76,7 +75,7 @@ var WebDJS;
                 this.vertexBuffer = vertexBuffer;
                 this.indexBuffer = indexBuffer;
                 this.changed = true;
-                this.loaded = false;
+                this.context = null;
             };
             GLRectangleVertexArray.prototype.translate = function (x, y) {
                 this.x = x;
@@ -98,14 +97,14 @@ var WebDJS;
             };
             GLRectangleVertexArray.prototype.apply = function (gl) {
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-                if (this.changed) {
+                if (this.changed || gl !== this.context) {
                     gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.STATIC_DRAW);
                     this.changed = false;
                 }
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-                if (!this.loaded) {
+                if (gl !== this.context) {
                     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
-                    this.loaded = true;
+                    this.context = gl;
                 }
             };
             return GLRectangleVertexArray;
@@ -119,7 +118,6 @@ var WebDJS;
                 if (texOp === void 0) { texOp = null; }
                 this.vertexArray = new GLRectangleVertexArray();
                 this.rgba = new Float32Array([1, 1, 1, 1]);
-                this.initialized = false;
                 this.recolor = true;
                 this.rebind = false;
                 this.texture(texOp);
@@ -142,7 +140,7 @@ var WebDJS;
                 this.recolor = true;
             };
             Simple.prototype.apply = function (gl) {
-                if (!this.initialized) {
+                if (gl !== this.context) {
                     this.vertexShader = gl.createShader(gl.VERTEX_SHADER);
                     gl.shaderSource(this.vertexShader, "attribute vec2 vxy;" + "varying vec2 txy;" + "void main() {" + "   gl_Position = vec4(vxy.x*2.0-1.0, 1.0-vxy.y*2.0, 0, 1);" + "   txy = vxy;" + "}");
                     gl.compileShader(this.vertexShader);
@@ -163,24 +161,26 @@ var WebDJS;
                     this.vertexBuffer = gl.createBuffer();
                     this.indexBuffer = gl.createBuffer();
                     this.vertexArray.bind(this.vertexBuffer, this.indexBuffer);
-                    this.glTexture = gl.createTexture();
-                    gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
+                    this.tex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.tex);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                    this.initialized = true;
                 }
                 if (this.rebind) {
-                    this.texOp.bind(this.glTexture);
+                    this.texOp.bind(this.tex);
                     this.rebind = false;
                 }
                 gl.useProgram(this.shaderProgram);
                 this.texOp.apply(gl);
                 this.vertexArray.apply(gl);
-                if (this.recolor) {
+                if (this.recolor || gl !== this.context) {
                     gl.uniform4fv(this.rgbaAttribLocation, this.rgba);
                     this.recolor = false;
+                }
+                if (gl !== this.context) {
+                    this.context = gl;
                 }
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
                 gl.vertexAttribPointer(this.xyAttribLocation, 2, gl.FLOAT, false, 0, 0);
