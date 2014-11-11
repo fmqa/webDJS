@@ -182,16 +182,32 @@
 				document.getElementById("R-parameter").value = document.getElementById("R-bar").value;
 				colorControl.send();
 			}, false);
+			document.getElementById("R-parameter").addEventListener("change", function() {
+				document.getElementById("R-bar").value = document.getElementById("R-parameter").value;
+				colorControl.send();
+			}, false);
 			document.getElementById("G-bar").addEventListener("change", function() {
 				document.getElementById("G-parameter").value = document.getElementById("G-bar").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("G-parameter").addEventListener("change", function() {
+				document.getElementById("G-bar").value = document.getElementById("G-parameter").value;
 				colorControl.send();
 			}, false);
 			document.getElementById("B-bar").addEventListener("change", function() {
 				document.getElementById("B-parameter").value = document.getElementById("B-bar").value;
 				colorControl.send();
 			}, false);
+			document.getElementById("B-parameter").addEventListener("change", function() {
+				document.getElementById("B-bar").value = document.getElementById("B-parameter").value;
+				colorControl.send();
+			}, false);
 			document.getElementById("Alpha-bar").addEventListener("change", function() {
 				document.getElementById("Alpha-parameter").value = document.getElementById("Alpha-bar").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("Alpha-parameter").addEventListener("change", function() {
+				document.getElementById("Alpha-bar").value = document.getElementById("Alpha-parameter").value;
 				colorControl.send();
 			}, false);
 		</script>
