@@ -42,7 +42,12 @@
             var renderer = new WebDJS.VJ.Simple();
             var vinput = new WebDJS.VJ.GLVideoInput(video);
             renderer.texture(vinput);
-            renderer.color(1,1,1,1);
+            
+            var colorControl = new WebDJS.VJ.ColorController(renderer);
+            colorControl.red(function(){return document.getElementById("R-bar").value/255;});
+            colorControl.green(function(){return document.getElementById("G-bar").value/255;});
+            colorControl.blue(function(){return document.getElementById("B-bar").value/255;});
+            colorControl.alpha(function(){return document.getElementById("Alpha-bar").value/255;});
             
             function renderLoop() {
                 gl.clear(gl.COLOR_BUFFER_BIT);
@@ -108,37 +113,37 @@
 													<tr>
 														<td>
 															<b>R</b>
-															<input type="range" min="0" max="255" id="R-bar" value="50">
+															<input type="range" min="0" max="255" id="R-bar" value="255">
 														</td>
 														<td>
-															<input type="number" min="0" max="255" class="filterinput" id="R-parameter" value="0">
+															<input type="number" min="0" max="255" class="filterinput" id="R-parameter" value="255">
 														</td>
 													</tr>
 													<tr>
 														<td>
 															<b>G</b>
-															<input type="range" min="0" max="255" id="G-bar" value="50">
+															<input type="range" min="0" max="255" id="G-bar" value="255">
 														</td>
 														<td>
-															<input type="number" min="0"  max="255" class="filterinput" id="G-parameter" value="0">
+															<input type="number" min="0"  max="255" class="filterinput" id="G-parameter" value="255">
 														</td>
 													</tr>
 													<tr>
 														<td>
 															<b>B</b>
-															<input type="range" min="0" max="255" id="B-bar" value="50">
+															<input type="range" min="0" max="255" id="B-bar" value="255">
 														</td>
 														<td>
-															<input type="number" min="0"  max="255" class="filterinput" id="B-parameter" value="0">
+															<input type="number" min="0"  max="255" class="filterinput" id="B-parameter" value="255">
 														</td>
 													</tr>
 													<tr>
 														<td>
 															<b>Alpha</b>
-															<input type="range" min="0" max="255" id="Alpha-bar" value="50">
+															<input type="range" min="0" max="255" id="Alpha-bar" value="255">
 														</td>
 														<td>
-															<input type="number" min="0"  max="255" class="filterinput" id="Alpha-parameter" value="0">
+															<input type="number" min="0"  max="255" class="filterinput" id="Alpha-parameter" value="255">
 														</td>
 													</tr>
 												</table>	
@@ -172,5 +177,23 @@
 				</div>
 			</section>		
 		<!-- <script src="js/"></script> -->
+		<script>
+			document.getElementById("R-bar").addEventListener("change", function() {
+				document.getElementById("R-parameter").value = document.getElementById("R-bar").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("G-bar").addEventListener("change", function() {
+				document.getElementById("G-parameter").value = document.getElementById("G-bar").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("B-bar").addEventListener("change", function() {
+				document.getElementById("B-parameter").value = document.getElementById("B-bar").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("Alpha-bar").addEventListener("change", function() {
+				document.getElementById("Alpha-parameter").value = document.getElementById("Alpha-bar").value;
+				colorControl.send();
+			}, false);
+		</script>
 	</body>
 </html>
