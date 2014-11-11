@@ -190,5 +190,30 @@ var WebDJS;
             return Simple;
         })();
         VJ.Simple = Simple;
+        var ColorController = (function () {
+            function ColorController(renderer, r, g, b, a) {
+                this.renderer = renderer;
+                this.red(r);
+                this.green(g);
+                this.blue(b);
+            }
+            ColorController.prototype.red = function (r) {
+                this.r = r;
+            };
+            ColorController.prototype.green = function (g) {
+                this.g = g;
+            };
+            ColorController.prototype.blue = function (b) {
+                this.b = b;
+            };
+            ColorController.prototype.alpha = function (a) {
+                this.a = a;
+            };
+            ColorController.prototype.send = function () {
+                this.renderer.color(this.r(), this.g(), this.b(), this.a());
+            };
+            return ColorController;
+        })();
+        VJ.ColorController = ColorController;
     })(VJ = WebDJS.VJ || (WebDJS.VJ = {}));
 })(WebDJS || (WebDJS = {}));

@@ -245,6 +245,39 @@ module WebDJS {
                 gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
             }
         }
+        
+        export interface ChannelSupplier {
+            () : number;
+        }
+        
+        export class ColorController {
+            private renderer : Simple;
+            private r : ChannelSupplier;
+            private g : ChannelSupplier;
+            private b : ChannelSupplier;
+            private a : ChannelSupplier;
+            constructor(renderer : Simple, r : ChannelSupplier, g : ChannelSupplier, b : ChannelSupplier, a : ChannelSupplier) {
+                this.renderer = renderer;
+                this.red(r);
+                this.green(g);
+                this.blue(b);
+            }
+            red(r : ChannelSupplier) : void {
+                this.r = r;
+            }
+            green(g : ChannelSupplier) : void {
+                this.g = g;
+            }
+            blue(b : ChannelSupplier) : void {
+                this.b = b;
+            }
+            alpha(a : ChannelSupplier) : void {
+                this.a = a;
+            }
+            send() : void {
+                this.renderer.color(this.r(), this.g(), this.b(), this.a());
+            }
+        }
     }
 }
 
