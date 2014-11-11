@@ -16,12 +16,6 @@ table tr td {
 .video_sec {
 	height: auto;
 	text-align: center;
-	
-	/* Demo Teil */
-	font-size: 20px;
-	color: gray;
-	text-align: center;
-	line-height: 250px;
 }
 
 .setups {
@@ -42,11 +36,13 @@ table tr td {
 }
 
 .videoDiv {
-	width: 40%;
-	height: 100%;
 	margin: 0 auto;
 	display: inline-block;
 	border: 1px solid gray;
+	position:relative;
+	width:540px;
+	height:360px;
+	border: none;
 }
 
 .setupsSection {
@@ -65,4 +61,10 @@ table tr td {
 .setupHead {
 	background-image: linear-gradient(to bottom, #2C3539 0px, black 100%) !important;
 	color: lightgray !important;
+}
+
+#canvas {
+	position:absolute;
+	left:0;
+	top:0;
 }

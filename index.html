@@ -11,7 +11,52 @@
 		<!-- VIDEO -->
 		<section class="video_sec">
 			<div class="videoDiv">
-				--Für Video --
+				
+				
+				
+       
+        <canvas id="canvas" width="540" height="360"></canvas>
+        <script src="js/webdjs/webdjs.js"></script>
+        <script>
+            var canvas = document.getElementById("canvas");
+            var gl = null;
+            var glContextTypes = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"];
+
+            for (var i = 0; i < glContextTypes.length && !gl; ++i) {
+                gl = canvas.getContext(glContextTypes[i]);
+            }
+            
+            var video = document.createElement("video");
+            var videoReady = false;
+            video.autoplay = true;
+            video.loop = true;
+            video.oncanplay = function() {
+                videoReady = true;
+            }
+            video.src = "assets/video.mp4";
+            video.play();
+            
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            
+            var renderer = new WebDJS.VJ.Simple();
+            var vinput = new WebDJS.VJ.GLVideoInput(video);
+            renderer.texture(vinput);
+            renderer.color(1,1,1,1);
+            
+            function renderLoop() {
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                if (videoReady) {
+                    vinput.reload();
+                    renderer.apply(gl);
+                }
+                window.requestAnimationFrame(renderLoop);
+            }
+            
+            renderLoop();
+        </script>
+				
+				
 			</div>
 		</section>
 		<section class="setupsSection">
