@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>WebDjs_Version1-DarkGray</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap-theme.min.css">
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+	</head>
+	<body>
+		<!-- VIDEO -->
+		<section class="video_sec">
+			<div class="videoDiv">
+				
+				
+				
+       
+        <canvas id="canvas" width="540" height="360"></canvas>
+        <script src="js/webdjs/webdjs.js"></script>
+        <script>
+            var canvas = document.getElementById("canvas");
+            var gl = null;
+            var glContextTypes = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"];
+
+            for (var i = 0; i < glContextTypes.length && !gl; ++i) {
+                gl = canvas.getContext(glContextTypes[i]);
+            }
+            
+            var video = document.createElement("video");
+            var videoReady = false;
+            video.autoplay = true;
+            video.loop = true;
+            video.oncanplay = function() {
+                videoReady = true;
+            }
+            video.src = "assets/video.mp4";
+            video.play();
+            
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            
+            var renderer = new WebDJS.VJ.Convolver();
+            var vinput = new WebDJS.VJ.GLVideoInput(video);
+            renderer.image(vinput, 540, 360);
+            renderer.transform(new Float32Array([
+        1,  2,  1,
+        0,  0,  0,
+       -1, -2, -1
+    ]));
+            
+            var colorControl = new WebDJS.VJ.ColorController(renderer);
+            colorControl.red(function(){return document.getElementById("R-bar").value/255;});
+            colorControl.green(function(){return document.getElementById("G-bar").value/255;});
+            colorControl.blue(function(){return document.getElementById("B-bar").value/255;});
+            colorControl.alpha(function(){return document.getElementById("Alpha-bar").value/255;});
+            
+            function renderLoop() {
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                if (videoReady) {
+                    vinput.reload();
+                    renderer.apply(gl);
+                }
+                window.requestAnimationFrame(renderLoop);
+            }
+            
+            renderLoop();
+        </script>
+				
+				
+			</div>
+		</section>
+		<section class="setupsSection">
+				<div class="setupDiv">
+					<table>
+						<tr>
+							<td>
+								<div class="panel panel-default setups">
+									<div class="panel-heading setupHead">Audio Controls</div>
+									<table class="table">
+										<tr>
+											<td>
+												-Volume-
+												<input type="range" min="0" max="100" id="vol" value="100">
+											</td>
+										</tr>
+										<tr>		
+											<td>
+												-Speed-
+													<input type="range" min="0" max= "200" id="audiospeed" value="100">
+											</td>
+										</tr>
+										<tr>		
+											<td>
+												<input class="btn btn-default" type="button" id="audioReset" value="Reset">
+											</td>
+										</tr>											
+									</table>
+								</div>
+							</td>
+							<td>
+								<!-- FILTER -->
+								<div class="panel panel-default setups">
+									<div class="panel-heading setupHead">Filter</div>
+												<table class="table">
+													<tr>
+														<td>
+															<input type="checkbox" id="sobel"> Sobel
+														</td>
+														<td>
+															<input type="number" min="0" class="filterinput" id="sobel-parameter" value="0">
+														</td>
+													</tr>
+													<tr>
+														<td>
+															<input type="checkbox" id="rgb"> RGB
+														</td>
+													</tr>
+													<tr>
+														<td>
+															<b>R</b>
+															<input type="range" min="0" max="255" id="R-bar" value="255">
+														</td>
+														<td>
+															<input type="number" min="0" max="255" class="filterinput" id="R-parameter" value="255">
+														</td>
+													</tr>
+													<tr>
+														<td>
+															<b>G</b>
+															<input type="range" min="0" max="255" id="G-bar" value="255">
+														</td>
+														<td>
+															<input type="number" min="0"  max="255" class="filterinput" id="G-parameter" value="255">
+														</td>
+													</tr>
+													<tr>
+														<td>
+															<b>B</b>
+															<input type="range" min="0" max="255" id="B-bar" value="255">
+														</td>
+														<td>
+															<input type="number" min="0"  max="255" class="filterinput" id="B-parameter" value="255">
+														</td>
+													</tr>
+													<tr>
+														<td>
+															<b>Alpha</b>
+															<input type="range" min="0" max="255" id="Alpha-bar" value="255">
+														</td>
+														<td>
+															<input type="number" min="0"  max="255" class="filterinput" id="Alpha-parameter" value="255">
+														</td>
+													</tr>
+												</table>	
+								</div>
+							</td>
+							<td>
+								<!-- RENDERER -->
+								<div class="panel panel-default setups">
+									<div class="panel-heading setupHead">Renderer</div>
+										<table class="table">
+											<tr>
+												<td>
+													<input type="radio" name="renderradio" id="cube"> Cube					
+												</td>
+											</tr>
+											<tr>
+												<td>
+													<input type="radio" name="renderradio" id="circle"> Sphere
+												</td>
+											</tr>
+											<tr>
+												<td>
+													<input type="radio" name="renderradio" id="circle" checked> Off
+												</td>
+											</tr>
+									</table>
+								</div>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</section>		
+		<!-- <script src="js/"></script> -->
+		<script>
+			document.getElementById("R-bar").addEventListener("change", function() {
+				document.getElementById("R-parameter").value = document.getElementById("R-bar").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("R-parameter").addEventListener("change", function() {
+				document.getElementById("R-bar").value = document.getElementById("R-parameter").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("G-bar").addEventListener("change", function() {
+				document.getElementById("G-parameter").value = document.getElementById("G-bar").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("G-parameter").addEventListener("change", function() {
+				document.getElementById("G-bar").value = document.getElementById("G-parameter").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("B-bar").addEventListener("change", function() {
+				document.getElementById("B-parameter").value = document.getElementById("B-bar").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("B-parameter").addEventListener("change", function() {
+				document.getElementById("B-bar").value = document.getElementById("B-parameter").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("Alpha-bar").addEventListener("change", function() {
+				document.getElementById("Alpha-parameter").value = document.getElementById("Alpha-bar").value;
+				colorControl.send();
+			}, false);
+			document.getElementById("Alpha-parameter").addEventListener("change", function() {
+				document.getElementById("Alpha-bar").value = document.getElementById("Alpha-parameter").value;
+				colorControl.send();
+			}, false);
+			
+			document.getElementById("vol").addEventListener("change", function() {
+				video.volume = document.getElementById("vol").value/100;
+			}, false);
+			
+			document.getElementById("audiospeed").addEventListener("change", function() {
+				video.playbackRate = document.getElementById("audiospeed").value/100;
+			}, false);
+		</script>
+	</body>
+</html>
