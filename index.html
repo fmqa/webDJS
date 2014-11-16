@@ -41,7 +41,7 @@
             
             var renderer = new WebDJS.VJ.Simple();
             var vinput = new WebDJS.VJ.GLVideoInput(video);
-            renderer.texture(vinput);
+            renderer.image(vinput);
             
             var colorControl = new WebDJS.VJ.ColorController(renderer);
             colorControl.red(function(){return document.getElementById("R-bar").value/255;});
