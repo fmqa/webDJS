@@ -166,7 +166,7 @@
 											</tr>
 											<tr>
 												<td>
-													<input type="radio" name="renderradio" id="circle" checked> Off
+													<input type="radio" name="renderradio" id="off" checked> Off
 												</td>
 											</tr>
 									</table>
@@ -178,37 +178,64 @@
 			</section>		
 		<!-- <script src="js/"></script> -->
 		<script>
-			document.getElementById("R-bar").addEventListener("change", function() {
-				document.getElementById("R-parameter").value = document.getElementById("R-bar").value;
+		
+			document.getElementById("rgb").addEventListener("change", function() {
+				var r = Math.floor((Math.random() * 255));
+				var g = Math.floor((Math.random() * 255));
+				var b = Math.floor((Math.random() * 255));
+				
+				document.getElementById("R-bar").value = r;
+				document.getElementById("G-bar").value = g;
+				document.getElementById("B-bar").value = b;
+				
 				colorControl.send();
+				changeBGColor();
+				
+			}, false);
+		
+			function sendColorBarToPara(bar, parameter) {
+				document.getElementById(parameter).value = document.getElementById(bar).value;
+				colorControl.send();
+			}
+			
+			function sendColorParaToBar(bar, parameter) {
+				document.getElementById(bar).value = document.getElementById(parameter).value;
+				colorControl.send();
+			}		
+			
+			function changeBGColor() {
+				document.body.style.backgroundColor = 'rgb(' + (255 - document.getElementById("R-bar").value) + ',' + (255 - document.getElementById("G-bar").value) + ',' + (255 - document.getElementById("B-bar").value) +  ')';
+			}
+		
+			document.getElementById("R-bar").addEventListener("change", function() {
+				sendColorBarToPara("R-bar", "R-parameter");
+				changeBGColor();
 			}, false);
 			document.getElementById("R-parameter").addEventListener("change", function() {
-				document.getElementById("R-bar").value = document.getElementById("R-parameter").value;
-				colorControl.send();
+				sendColorParaToBar("R-bar", "R-parameter");
+				changeBGColor();
 			}, false);
 			document.getElementById("G-bar").addEventListener("change", function() {
-				document.getElementById("G-parameter").value = document.getElementById("G-bar").value;
-				colorControl.send();
+				sendColorBarToPara("G-bar", "G-parameter");
+				changeBGColor();
 			}, false);
 			document.getElementById("G-parameter").addEventListener("change", function() {
-				document.getElementById("G-bar").value = document.getElementById("G-parameter").value;
-				colorControl.send();
+				sendColorParaToBar("G-bar", "G-parameter");
+				changeBGColor();
 			}, false);
 			document.getElementById("B-bar").addEventListener("change", function() {
-				document.getElementById("B-parameter").value = document.getElementById("B-bar").value;
-				colorControl.send();
+				sendColorBarToPara("B-bar", "B-parameter");
+				changeBGColor();
 			}, false);
 			document.getElementById("B-parameter").addEventListener("change", function() {
-				document.getElementById("B-bar").value = document.getElementById("B-parameter").value;
-				colorControl.send();
+				sendColorParaToBar("B-bar", "B-parameter");
+				changeBGColor();
 			}, false);
 			document.getElementById("Alpha-bar").addEventListener("change", function() {
-				document.getElementById("Alpha-parameter").value = document.getElementById("Alpha-bar").value;
-				colorControl.send();
+				sendColorBarToPara("Alpha-bar", "Alpha-parameter");
 			}, false);
 			document.getElementById("Alpha-parameter").addEventListener("change", function() {
-				document.getElementById("Alpha-bar").value = document.getElementById("Alpha-parameter").value;
-				colorControl.send();
+				sendColorParaToBar("Alpha-bar", "Alpha-parameter");
 			}, false);
 			
 			document.getElementById("vol").addEventListener("change", function() {
