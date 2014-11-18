@@ -75,13 +75,13 @@
 										<tr>
 											<td>
 												-Volume-
-												<input type="range" min="0" max="100" id="vol" value="50">
+												<input type="range" min="0" max="100" id="vol" value="100">
 											</td>
 										</tr>
 										<tr>		
 											<td>
 												-Speed-
-													<input type="range" min="0" max= "200" id="audiospeed" value="50">
+													<input type="range" min="0" max= "200" id="audiospeed" value="100">
 											</td>
 										</tr>
 										<tr>		
@@ -107,7 +107,9 @@
 													</tr>
 													<tr>
 														<td>
-															<input type="checkbox" id="rgb"> RGB
+															<input type="checkbox" id="rgb"> Disco Mode
+														</td>
+														<td>
 														</td>
 													</tr>
 													<tr>
@@ -179,17 +181,24 @@
 		<!-- <script src="js/"></script> -->
 		<script>
 		
-			document.getElementById("rgb").addEventListener("change", function() {
-				var r = Math.floor((Math.random() * 255));
-				var g = Math.floor((Math.random() * 255));
-				var b = Math.floor((Math.random() * 255));
+			document.getElementById("rgb").addEventListener("change", function randomColor() {
 				
-				document.getElementById("R-bar").value = r;
-				document.getElementById("G-bar").value = g;
-				document.getElementById("B-bar").value = b;
+				if (document.getElementById("rgb").checked == true) {
+					var r = Math.floor((Math.random() * 255));
+					var g = Math.floor((Math.random() * 255));
+					var b = Math.floor((Math.random() * 255));
 				
-				colorControl.send();
-				changeBGColor();
+					document.getElementById("R-bar").value = r;
+					document.getElementById("R-parameter").value = r;
+					document.getElementById("G-bar").value = g;
+					document.getElementById("G-parameter").value = g;
+					document.getElementById("B-bar").value = b;
+					document.getElementById("B-parameter").value = b;
+				
+					colorControl.send();
+					//changeBGColor();
+					setTimeout(randomColor, 200);
+				}
 				
 			}, false);
 		
@@ -203,33 +212,33 @@
 				colorControl.send();
 			}		
 			
-			function changeBGColor() {
+			/*function changeBGColor() {
 				document.body.style.backgroundColor = 'rgb(' + (255 - document.getElementById("R-bar").value) + ',' + (255 - document.getElementById("G-bar").value) + ',' + (255 - document.getElementById("B-bar").value) +  ')';
-			}
+			}*/
 		
 			document.getElementById("R-bar").addEventListener("change", function() {
 				sendColorBarToPara("R-bar", "R-parameter");
-				changeBGColor();
+				//changeBGColor();
 			}, false);
 			document.getElementById("R-parameter").addEventListener("change", function() {
 				sendColorParaToBar("R-bar", "R-parameter");
-				changeBGColor();
+				//changeBGColor();
 			}, false);
 			document.getElementById("G-bar").addEventListener("change", function() {
 				sendColorBarToPara("G-bar", "G-parameter");
-				changeBGColor();
+				//changeBGColor();
 			}, false);
 			document.getElementById("G-parameter").addEventListener("change", function() {
 				sendColorParaToBar("G-bar", "G-parameter");
-				changeBGColor();
+				//changeBGColor();
 			}, false);
 			document.getElementById("B-bar").addEventListener("change", function() {
 				sendColorBarToPara("B-bar", "B-parameter");
-				changeBGColor();
+				//changeBGColor();
 			}, false);
 			document.getElementById("B-parameter").addEventListener("change", function() {
 				sendColorParaToBar("B-bar", "B-parameter");
-				changeBGColor();
+				//changeBGColor();
 			}, false);
 			document.getElementById("Alpha-bar").addEventListener("change", function() {
 				sendColorBarToPara("Alpha-bar", "Alpha-parameter");
