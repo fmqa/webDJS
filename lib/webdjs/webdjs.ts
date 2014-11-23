@@ -90,7 +90,7 @@ module WebDJS {
 		    }
 	    }
 	    
-	    export class GLFramebufferInput {
+	    export class GLFramebufferInput implements GLSizedTextureOperation {
 	        private context : WebGLRenderingContext;
 	        private src : GLSizedTextureOperation;
 	        private texture : WebGLTexture;
@@ -218,12 +218,6 @@ module WebDJS {
                 this.img = img;
                 this.rebind = true;
             }
-            translate(x : number, y : number) : void {
-                this.vertexArray.translate(x, y);
-            }
-            resize(width : number, height : number) : void {
-                this.vertexArray.resize(width, height);
-            }
             color(r : number, g : number, b : number, a : number) : void {
                 this.rgba[0] = r;
                 this.rgba[1] = g;
@@ -349,12 +343,6 @@ module WebDJS {
             transform(kernel : Float32Array) : void {
                 this.kernel = kernel;
                 this.changed = true;
-            }
-            translate(x : number, y : number) : void {
-                this.vertexArray.translate(x, y);
-            }
-            resize(width : number, height : number) : void {
-                this.vertexArray.resize(width, height);
             }
             bind(texture : WebGLTexture) : void {
                 this.texture = texture;
