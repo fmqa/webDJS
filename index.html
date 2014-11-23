@@ -39,9 +39,17 @@
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
             
+            var texture1 = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture1);        
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            
             var renderer = new WebDJS.VJ.Simple();
             var vinput = new WebDJS.VJ.GLVideoInput(video);
-            renderer.image(vinput);
+            renderer.inlet(vinput);
+            renderer.bind(texture1);
             
             var colorControl = new WebDJS.VJ.ColorController(renderer);
             colorControl.red(function(){return document.getElementById("R-bar").value/255;});

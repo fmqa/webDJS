@@ -192,14 +192,14 @@ module WebDJS {
 		/**
 		 * Simple Renderer - Render HTML Image/Video to GL context.
 		 */
-        export class Simple implements GLOperation {
-            private img : GLTextureOperation;
+        export class Simple implements GLSizedTextureOperation {
+            private input : GLSizedTextureOperation;
             private vertexShader : WebGLShader;
             private fragmentShader : WebGLShader;
             private shaderProgram : WebGLProgram;
             private texture : WebGLTexture;
             private xyLocation : number;
-            private yflip : number;
+            private yflip : number = 1;
             private samplerLocation : WebGLUniformLocation;
             private rgbaLocation : WebGLUniformLocation;
             private flipyLocation : WebGLUniformLocation;
@@ -211,11 +211,12 @@ module WebDJS {
             private recolor : boolean = true;
             private rebind : boolean = false;
             private flipped : boolean = false;
-            constructor(img : GLTextureOperation = null) {
-                this.image(img);
+            constructor(input : GLSizedTextureOperation = null, texture : WebGLTexture = null) {
+                this.inlet(input);
+                this.bind(texture);
             }
-            image(img : GLTextureOperation) : void {
-                this.img = img;
+            inlet(input : GLSizedTextureOperation) : void {
+                this.input = input;
                 this.rebind = true;
             }
             color(r : number, g : number, b : number, a : number) : void {
@@ -228,6 +229,15 @@ module WebDJS {
             flipy(yflip : number) : void {
                 this.yflip = yflip;
                 this.flipped = true;
+            }
+            bind(texture : WebGLTexture) : void {
+                this.texture = texture;
+            }
+            width() : number {
+                return this.input.width();
+            }
+            height() : number {
+                return this.input.height();
             }
             apply(gl : WebGLRenderingContext) : void {
                 if (gl !== this.context) {
@@ -276,20 +286,20 @@ module WebDJS {
                     this.indexBuffer = gl.createBuffer();
                     this.vertexArray.bind(this.vertexBuffer, this.indexBuffer);
                     
-                    this.texture = gl.createTexture();
-                    gl.bindTexture(gl.TEXTURE_2D, this.texture);        
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    //this.texture = gl.createTexture();
+                    //gl.bindTexture(gl.TEXTURE_2D, this.texture);        
+                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 }
                 
                 if (this.rebind || gl !== this.context) {
-                    this.img.bind(this.texture);
+                    this.input.bind(this.texture);
                     this.rebind = false;
                 }
                 
-                this.img.apply(gl);
+                this.input.apply(gl);
                 this.vertexArray.apply(gl);
                 
                 gl.useProgram(this.shaderProgram);
@@ -319,7 +329,7 @@ module WebDJS {
         export class Convolver implements GLSizedTextureOperation {
             private context : WebGLRenderingContext;
             private texture : WebGLTexture;
-            private img : GLSizedTextureOperation;
+            private input : GLSizedTextureOperation;
             private kernel : Float32Array = new Float32Array([0,0,0,0,1,0,0,0,0]);
             private vertexShader : WebGLShader;
             private fragmentShader : WebGLShader;
@@ -336,8 +346,12 @@ module WebDJS {
             private changed : boolean = false;
             private flipped : boolean = false;
             private yflip : number = 1;
-            image(img : GLSizedTextureOperation) : void {
-                this.img = img;
+            constructor(input : GLSizedTextureOperation = null, texture : WebGLTexture = null) {
+                this.inlet(input);
+                this.bind(texture);
+            }
+            inlet(input : GLSizedTextureOperation) : void {
+                this.input = input;
                 this.rebind = true;
             }
             transform(kernel : Float32Array) : void {
@@ -348,10 +362,10 @@ module WebDJS {
                 this.texture = texture;
             }
             width() : number {
-                return this.img.width();
+                return this.input.width();
             }
             height() : number {
-                return this.img.height();
+                return this.input.height();
             }
             flipy(yflip : number) : void {
                 this.yflip = yflip;
@@ -426,25 +440,25 @@ module WebDJS {
                     this.flipyLocation = gl.getUniformLocation(this.shaderProgram, "flipy");
                     gl.uniform1f(this.flipyLocation, this.yflip);
                     
-                    this.texture = gl.createTexture();
-                    gl.bindTexture(gl.TEXTURE_2D, this.texture);        
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    //this.texture = gl.createTexture();
+                    //gl.bindTexture(gl.TEXTURE_2D, this.texture);        
+                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 }
                 
                 if (this.rebind || gl !== this.context) {
-                    this.img.bind(this.texture);
+                    this.input.bind(this.texture);
                 }
                 
-                this.img.apply(gl);
+                this.input.apply(gl);
                 this.vertexArray.apply(gl);
                 
                 gl.useProgram(this.shaderProgram);
                 
                 if (this.rebind || gl !== this.context) {
-                    gl.uniform2f(this.tsizeLocation, this.img.width(), this.img.height());
+                    gl.uniform2f(this.tsizeLocation, this.input.width(), this.input.height());
                     this.rebind = false;
                 }
                 

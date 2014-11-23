@@ -68,6 +68,45 @@ var WebDJS;
             return GLVideoInput;
         })();
         VJ.GLVideoInput = GLVideoInput;
+        var GLFramebufferInput = (function () {
+            function GLFramebufferInput(src, texture, fbo) {
+                if (texture === void 0) { texture = null; }
+                if (fbo === void 0) { fbo = null; }
+                this.src = src;
+                this.bind(texture);
+                this.framebuffer(fbo);
+            }
+            GLFramebufferInput.prototype.bind = function (texture) {
+                this.texture = texture;
+                this.context = null;
+            };
+            GLFramebufferInput.prototype.framebuffer = function (fbo) {
+                this.fbo = fbo;
+                this.context = null;
+            };
+            GLFramebufferInput.prototype.width = function () {
+                return this.src.width();
+            };
+            GLFramebufferInput.prototype.height = function () {
+                return this.src.height();
+            };
+            GLFramebufferInput.prototype.apply = function (gl) {
+                gl.bindTexture(gl.TEXTURE_2D, this.texture);
+                if (gl !== this.context) {
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width(), this.height(), 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                }
+                gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+                if (gl !== this.context) {
+                    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
+                    this.context = gl;
+                }
+                this.src.apply(gl);
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            };
+            return GLFramebufferInput;
+        })();
+        VJ.GLFramebufferInput = GLFramebufferInput;
         /**
          * Vertex Array Object.
          *
@@ -126,23 +165,21 @@ var WebDJS;
          * Simple Renderer - Render HTML Image/Video to GL context.
          */
         var Simple = (function () {
-            function Simple(img) {
-                if (img === void 0) { img = null; }
+            function Simple(input, texture) {
+                if (input === void 0) { input = null; }
+                if (texture === void 0) { texture = null; }
+                this.yflip = 1;
                 this.vertexArray = new GLRectangleVertexArray();
                 this.rgba = new Float32Array([1, 1, 1, 1]);
                 this.recolor = true;
                 this.rebind = false;
-                this.image(img);
+                this.flipped = false;
+                this.inlet(input);
+                this.bind(texture);
             }
-            Simple.prototype.image = function (img) {
-                this.img = img;
+            Simple.prototype.inlet = function (input) {
+                this.input = input;
                 this.rebind = true;
-            };
-            Simple.prototype.translate = function (x, y) {
-                this.vertexArray.translate(x, y);
-            };
-            Simple.prototype.resize = function (width, height) {
-                this.vertexArray.resize(width, height);
             };
             Simple.prototype.color = function (r, g, b, a) {
                 this.rgba[0] = r;
@@ -151,10 +188,23 @@ var WebDJS;
                 this.rgba[3] = a;
                 this.recolor = true;
             };
+            Simple.prototype.flipy = function (yflip) {
+                this.yflip = yflip;
+                this.flipped = true;
+            };
+            Simple.prototype.bind = function (texture) {
+                this.texture = texture;
+            };
+            Simple.prototype.width = function () {
+                return this.input.width();
+            };
+            Simple.prototype.height = function () {
+                return this.input.height();
+            };
             Simple.prototype.apply = function (gl) {
                 if (gl !== this.context) {
                     this.vertexShader = gl.createShader(gl.VERTEX_SHADER);
-                    gl.shaderSource(this.vertexShader, "attribute vec2 vxy;" + "varying vec2 txy;" + "void main() {" + "   gl_Position = vec4(vxy.x*2.0-1.0, 1.0-vxy.y*2.0, 0, 1);" + "   txy = vxy;" + "}");
+                    gl.shaderSource(this.vertexShader, "attribute vec2 vxy;" + "varying vec2 txy;" + "uniform float flipy;" + "void main() {" + "   gl_Position = vec4(vxy.x*2.0-1.0, (1.0-vxy.y*2.0)*flipy, 0, 1);" + "   txy = vxy;" + "}");
                     gl.compileShader(this.vertexShader);
                     this.fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
                     gl.shaderSource(this.fragmentShader, "precision mediump float;" + "uniform sampler2D sampler;" + "uniform vec4 rgba;" + "varying vec2 txy;" + "void main() {" + "   vec4 texColor = texture2D(sampler, txy);" + "   gl_FragColor = texColor * rgba;" + "}");
@@ -170,26 +220,26 @@ var WebDJS;
                     gl.uniform1i(this.samplerLocation, 0);
                     this.rgbaLocation = gl.getUniformLocation(this.shaderProgram, "rgba");
                     gl.uniform4fv(this.rgbaLocation, this.rgba);
+                    this.flipyLocation = gl.getUniformLocation(this.shaderProgram, "flipy");
+                    gl.uniform1f(this.flipyLocation, this.yflip);
                     this.vertexBuffer = gl.createBuffer();
                     this.indexBuffer = gl.createBuffer();
                     this.vertexArray.bind(this.vertexBuffer, this.indexBuffer);
-                    this.texture = gl.createTexture();
-                    gl.bindTexture(gl.TEXTURE_2D, this.texture);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 }
                 if (this.rebind || gl !== this.context) {
-                    this.img.bind(this.texture);
+                    this.input.bind(this.texture);
                     this.rebind = false;
                 }
-                gl.useProgram(this.shaderProgram);
-                this.img.apply(gl);
+                this.input.apply(gl);
                 this.vertexArray.apply(gl);
+                gl.useProgram(this.shaderProgram);
                 if (this.recolor || gl !== this.context) {
                     gl.uniform4fv(this.rgbaLocation, this.rgba);
                     this.recolor = false;
+                }
+                if (this.flipped || gl !== this.context) {
+                    gl.uniform1f(this.flipyLocation, this.yflip);
+                    this.flipped = false;
                 }
                 if (gl !== this.context) {
                     this.context = gl;
@@ -203,30 +253,43 @@ var WebDJS;
         })();
         VJ.Simple = Simple;
         var Convolver = (function () {
-            function Convolver() {
+            function Convolver(input, texture) {
+                if (input === void 0) { input = null; }
+                if (texture === void 0) { texture = null; }
                 this.kernel = new Float32Array([0, 0, 0, 0, 1, 0, 0, 0, 0]);
                 this.vertexArray = new GLRectangleVertexArray();
                 this.rebind = false;
                 this.changed = false;
+                this.flipped = false;
+                this.yflip = 1;
+                this.inlet(input);
+                this.bind(texture);
             }
-            Convolver.prototype.image = function (img, width, height) {
-                this.img = img;
+            Convolver.prototype.inlet = function (input) {
+                this.input = input;
                 this.rebind = true;
             };
             Convolver.prototype.transform = function (kernel) {
                 this.kernel = kernel;
                 this.changed = true;
             };
-            Convolver.prototype.translate = function (x, y) {
-                this.vertexArray.translate(x, y);
+            Convolver.prototype.bind = function (texture) {
+                this.texture = texture;
             };
-            Convolver.prototype.resize = function (width, height) {
-                this.vertexArray.resize(width, height);
+            Convolver.prototype.width = function () {
+                return this.input.width();
+            };
+            Convolver.prototype.height = function () {
+                return this.input.height();
+            };
+            Convolver.prototype.flipy = function (yflip) {
+                this.yflip = yflip;
+                this.flipped = true;
             };
             Convolver.prototype.apply = function (gl) {
                 if (gl !== this.context) {
                     this.vertexShader = gl.createShader(gl.VERTEX_SHADER);
-                    gl.shaderSource(this.vertexShader, "attribute vec2 vxy;" + "varying vec2 txy;" + "void main() {" + "   gl_Position = vec4(vxy.x*2.0-1.0, 1.0-vxy.y*2.0, 0, 1);" + "   txy = vxy;" + "}");
+                    gl.shaderSource(this.vertexShader, "attribute vec2 vxy;" + "varying vec2 txy;" + "uniform float flipy;" + "void main() {" + "   gl_Position = vec4(vxy.x*2.0-1.0, (1.0-vxy.y*2.0)*flipy, 0, 1);" + "   txy = vxy;" + "}");
                     gl.compileShader(this.vertexShader);
                     this.fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
                     gl.shaderSource(this.fragmentShader, "precision mediump float;" + "uniform sampler2D sampler;" + "uniform vec2 tsize;" + "uniform float kernel[9];" + "varying vec2 txy;" + "void main() {" + "   vec2 p = vec2(1.0, 1.0) / tsize;" + "   vec4 s = texture2D(sampler, txy + p * vec2(-1, -1)) * kernel[0] +" + "            texture2D(sampler, txy + p * vec2(0, -1)) * kernel[1] +" + "            texture2D(sampler, txy + p * vec2(1, -1)) * kernel[2] +" + "            texture2D(sampler, txy + p * vec2(-1, 0)) * kernel[3] +" + "            texture2D(sampler, txy + p * vec2(0, 0)) * kernel[4] +" + "            texture2D(sampler, txy + p * vec2(1, 0)) * kernel[5] +" + "            texture2D(sampler, txy + p * vec2(-1, 1)) * kernel[6] +" + "            texture2D(sampler, txy + p * vec2(0, 1)) * kernel[7] +" + "            texture2D(sampler, txy + p * vec2(1, 1)) * kernel[8];" + "   float w = kernel[0] +" + "             kernel[1] +" + "             kernel[2] +" + "             kernel[3] +" + "             kernel[4] +" + "             kernel[5] +" + "             kernel[6] +" + "             kernel[7] +" + "             kernel[8];" + "   if (w <= 0.0) {" + "       w = 1.0;" + "   }" + "   gl_FragColor = vec4((s / w).rgb, 1);" + "}");
@@ -245,25 +308,25 @@ var WebDJS;
                     gl.uniform1i(this.samplerLocation, 0);
                     this.tsizeLocation = gl.getUniformLocation(this.shaderProgram, "tsize");
                     this.kernelLocation = gl.getUniformLocation(this.shaderProgram, "kernel[0]");
-                    this.texture = gl.createTexture();
-                    gl.bindTexture(gl.TEXTURE_2D, this.texture);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.flipyLocation = gl.getUniformLocation(this.shaderProgram, "flipy");
+                    gl.uniform1f(this.flipyLocation, this.yflip);
                 }
                 if (this.rebind || gl !== this.context) {
-                    this.img.bind(this.texture);
+                    this.input.bind(this.texture);
                 }
-                gl.useProgram(this.shaderProgram);
-                this.img.apply(gl);
+                this.input.apply(gl);
                 this.vertexArray.apply(gl);
+                gl.useProgram(this.shaderProgram);
                 if (this.rebind || gl !== this.context) {
-                    gl.uniform2f(this.tsizeLocation, this.img.width(), this.img.height());
+                    gl.uniform2f(this.tsizeLocation, this.input.width(), this.input.height());
                     this.rebind = false;
                 }
                 if (this.changed || gl !== this.context) {
                     gl.uniform1fv(this.kernelLocation, this.kernel);
+                }
+                if (this.flipped || gl !== this.context) {
+                    gl.uniform1f(this.flipyLocation, this.yflip);
+                    this.flipped = false;
                 }
                 if (gl !== this.context) {
                     this.context = gl;
