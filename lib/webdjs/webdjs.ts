@@ -17,7 +17,7 @@ module WebDJS {
         /**
          * Loads a fixed-size image to a texture.
          */
-        export interface GLImageTextureLoader extends GLTextureOperation {
+        export interface GLSizedTextureOperation extends GLTextureOperation {
             width() : number;
             height() : number;
         }
@@ -25,7 +25,7 @@ module WebDJS {
 		/**
 		 * HTML Image -> Texture operation.
 		 */
-        export class GLImageInput implements GLImageTextureLoader {
+        export class GLImageInput implements GLSizedTextureOperation {
 	        private src : HTMLImageElement;
 	        private texture : WebGLTexture;
 	        private context : WebGLRenderingContext;
@@ -59,7 +59,7 @@ module WebDJS {
 		/**
 		 * HTML Video -> Texture operation.
 		 */
-	    export class GLVideoInput implements GLImageTextureLoader {
+	    export class GLVideoInput implements GLSizedTextureOperation {
 		    private src : HTMLVideoElement;
 		    private texture : WebGLTexture;
 		    private context : WebGLRenderingContext;
@@ -87,6 +87,46 @@ module WebDJS {
     			    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.src);
     			    this.context = gl;
     			}
+		    }
+	    }
+	    
+	    export class GLFramebufferInput {
+	        private context : WebGLRenderingContext;
+	        private src : GLSizedTextureOperation;
+	        private texture : WebGLTexture;
+	        private fbo : WebGLFramebuffer;
+	        constructor(src : GLSizedTextureOperation, texture : WebGLTexture = null, fbo : WebGLFramebuffer = null) {
+	            this.src = src;
+	            this.bind(texture);
+	            this.framebuffer(fbo);
+	        }
+	        bind(texture : WebGLTexture) : void {
+		        this.texture = texture;
+		        this.context = null;
+		    }
+		    framebuffer(fbo : WebGLFramebuffer) : void {
+		        this.fbo = fbo;
+		        this.context = null;
+		    }
+		    width() : number {
+		        return this.src.width();
+		    }
+		    height() : number {
+		        return this.src.height();
+		    }
+		    apply(gl : WebGLRenderingContext) : void {
+		        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+	            if (gl !== this.context) {
+	                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width(), this.height(), 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+	            }
+	            gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+	            if (gl !== this.context) {
+	                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
+	                this.context = gl;
+	            }
+	            this.src.apply(gl);
+	            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	            gl.bindTexture(gl.TEXTURE_2D, this.texture);
 		    }
 	    }
 		
@@ -159,8 +199,10 @@ module WebDJS {
             private shaderProgram : WebGLProgram;
             private texture : WebGLTexture;
             private xyLocation : number;
+            private yflip : number;
             private samplerLocation : WebGLUniformLocation;
             private rgbaLocation : WebGLUniformLocation;
+            private flipyLocation : WebGLUniformLocation;
             private vertexBuffer : WebGLBuffer;
             private indexBuffer : WebGLBuffer;
             private vertexArray : GLRectangleVertexArray = new GLRectangleVertexArray();
@@ -168,6 +210,7 @@ module WebDJS {
             private context : WebGLRenderingContext;
             private recolor : boolean = true;
             private rebind : boolean = false;
+            private flipped : boolean = false;
             constructor(img : GLTextureOperation = null) {
                 this.image(img);
             }
@@ -188,14 +231,19 @@ module WebDJS {
                 this.rgba[3] = a;
                 this.recolor = true;
             }
+            flipy(yflip : number) : void {
+                this.yflip = yflip;
+                this.flipped = true;
+            }
             apply(gl : WebGLRenderingContext) : void {
                 if (gl !== this.context) {
                     this.vertexShader = gl.createShader(gl.VERTEX_SHADER);
                     gl.shaderSource(this.vertexShader, 
                         "attribute vec2 vxy;" +
                         "varying vec2 txy;" +
+                        "uniform float flipy;" +
                         "void main() {" +
-                        "   gl_Position = vec4(vxy.x*2.0-1.0, 1.0-vxy.y*2.0, 0, 1);" +
+                        "   gl_Position = vec4(vxy.x*2.0-1.0, (1.0-vxy.y*2.0)*flipy, 0, 1);" +
                         "   txy = vxy;" +
                         "}");
                     gl.compileShader(this.vertexShader);
@@ -227,6 +275,9 @@ module WebDJS {
                     this.rgbaLocation = gl.getUniformLocation(this.shaderProgram, "rgba");
                     gl.uniform4fv(this.rgbaLocation, this.rgba);
                     
+                    this.flipyLocation = gl.getUniformLocation(this.shaderProgram, "flipy");
+                    gl.uniform1f(this.flipyLocation, this.yflip);
+                    
                     this.vertexBuffer = gl.createBuffer();
                     this.indexBuffer = gl.createBuffer();
                     this.vertexArray.bind(this.vertexBuffer, this.indexBuffer);
@@ -244,14 +295,19 @@ module WebDJS {
                     this.rebind = false;
                 }
                 
-                gl.useProgram(this.shaderProgram);
-                
                 this.img.apply(gl);
                 this.vertexArray.apply(gl);
+                
+                gl.useProgram(this.shaderProgram);
                 
                 if (this.recolor || gl !== this.context) {
                     gl.uniform4fv(this.rgbaLocation, this.rgba);
                     this.recolor = false;
+                }
+                
+                if (this.flipped || gl !== this.context) {
+                    gl.uniform1f(this.flipyLocation, this.yflip);
+                    this.flipped = false;
                 }
                 
                 if (gl !== this.context) {
@@ -266,10 +322,10 @@ module WebDJS {
             }
         }
         
-        export class Convolver implements GLOperation {
+        export class Convolver implements GLSizedTextureOperation {
             private context : WebGLRenderingContext;
             private texture : WebGLTexture;
-            private img : GLImageTextureLoader;
+            private img : GLSizedTextureOperation;
             private kernel : Float32Array = new Float32Array([0,0,0,0,1,0,0,0,0]);
             private vertexShader : WebGLShader;
             private fragmentShader : WebGLShader;
@@ -278,12 +334,15 @@ module WebDJS {
             private samplerLocation : WebGLUniformLocation;
             private tsizeLocation : WebGLUniformLocation;
             private kernelLocation : WebGLUniformLocation;
+            private flipyLocation : WebGLUniformLocation;
             private vertexArray : GLRectangleVertexArray = new GLRectangleVertexArray();
             private vertexBuffer : WebGLBuffer;
             private indexBuffer : WebGLBuffer;
             private rebind : boolean = false;
             private changed : boolean = false;
-            image(img : GLImageTextureLoader, width : number, height : number) : void {
+            private flipped : boolean = false;
+            private yflip : number = 1;
+            image(img : GLSizedTextureOperation) : void {
                 this.img = img;
                 this.rebind = true;
             }
@@ -297,14 +356,28 @@ module WebDJS {
             resize(width : number, height : number) : void {
                 this.vertexArray.resize(width, height);
             }
+            bind(texture : WebGLTexture) : void {
+                this.texture = texture;
+            }
+            width() : number {
+                return this.img.width();
+            }
+            height() : number {
+                return this.img.height();
+            }
+            flipy(yflip : number) : void {
+                this.yflip = yflip;
+                this.flipped = true;
+            }
             apply(gl : WebGLRenderingContext) {
                 if (gl !== this.context) {
                     this.vertexShader = gl.createShader(gl.VERTEX_SHADER);
                     gl.shaderSource(this.vertexShader, 
                         "attribute vec2 vxy;" +
                         "varying vec2 txy;" +
+                        "uniform float flipy;" +
                         "void main() {" +
-                        "   gl_Position = vec4(vxy.x*2.0-1.0, 1.0-vxy.y*2.0, 0, 1);" +
+                        "   gl_Position = vec4(vxy.x*2.0-1.0, (1.0-vxy.y*2.0)*flipy, 0, 1);" +
                         "   txy = vxy;" +
                         "}");
                     gl.compileShader(this.vertexShader);
@@ -362,6 +435,9 @@ module WebDJS {
                     this.tsizeLocation = gl.getUniformLocation(this.shaderProgram, "tsize");
                     this.kernelLocation = gl.getUniformLocation(this.shaderProgram, "kernel[0]");
                     
+                    this.flipyLocation = gl.getUniformLocation(this.shaderProgram, "flipy");
+                    gl.uniform1f(this.flipyLocation, this.yflip);
+                    
                     this.texture = gl.createTexture();
                     gl.bindTexture(gl.TEXTURE_2D, this.texture);        
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -374,10 +450,10 @@ module WebDJS {
                     this.img.bind(this.texture);
                 }
                 
-                gl.useProgram(this.shaderProgram);
-                
                 this.img.apply(gl);
                 this.vertexArray.apply(gl);
+                
+                gl.useProgram(this.shaderProgram);
                 
                 if (this.rebind || gl !== this.context) {
                     gl.uniform2f(this.tsizeLocation, this.img.width(), this.img.height());
@@ -386,6 +462,11 @@ module WebDJS {
                 
                 if (this.changed || gl !== this.context) {
                     gl.uniform1fv(this.kernelLocation, this.kernel);
+                }
+                
+                if (this.flipped || gl !== this.context) {
+                    gl.uniform1f(this.flipyLocation, this.yflip);
+                    this.flipped = false;
                 }
                 
                 if (gl !== this.context) {

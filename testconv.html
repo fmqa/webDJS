@@ -43,10 +43,19 @@
             var vinput = new WebDJS.VJ.GLVideoInput(video);
             renderer.image(vinput, 540, 360);
             renderer.transform(new Float32Array([
-        1,  2,  1,
-        0,  0,  0,
-       -1, -2, -1
-    ]));
+                1,  2,  1,
+                0,  0,  0,
+               -1, -2, -1
+            ]));
+            
+            var fbo = gl.createFramebuffer();
+            var fbinput = new WebDJS.VJ.GLFramebufferInput(renderer);
+            fbinput.framebuffer(fbo);
+            
+            var renderer2 = new WebDJS.VJ.Simple();
+            renderer2.image(fbinput);
+            renderer2.color(1,0,0,1);
+            renderer2.flipy(-1);
             
             var colorControl = new WebDJS.VJ.ColorController(renderer);
             colorControl.red(function(){return document.getElementById("R-bar").value/255;});
@@ -58,7 +67,7 @@
                 gl.clear(gl.COLOR_BUFFER_BIT);
                 if (videoReady) {
                     vinput.reload();
-                    renderer.apply(gl);
+                    renderer2.apply(gl);
                 }
                 window.requestAnimationFrame(renderLoop);
             }
