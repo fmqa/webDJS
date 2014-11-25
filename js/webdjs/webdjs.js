@@ -5,115 +5,107 @@ var WebDJS;
         /**
          * HTML Image -> Texture operation.
          */
-        var GLImageInput = (function () {
-            function GLImageInput(src, texture) {
+        var ImageSupplier = (function () {
+            function ImageSupplier(src, texture) {
                 if (texture === void 0) { texture = null; }
                 this.src = src;
                 this.bind(texture);
             }
-            GLImageInput.prototype.bind = function (texture) {
+            ImageSupplier.prototype.bind = function (texture) {
                 this.texture = texture;
                 this.reload();
             };
-            GLImageInput.prototype.reload = function () {
+            ImageSupplier.prototype.register = function (target) {
+                this.target = target;
+            };
+            ImageSupplier.prototype.reload = function () {
                 this.context = null;
             };
-            GLImageInput.prototype.width = function () {
-                return this.src.width;
-            };
-            GLImageInput.prototype.height = function () {
-                return this.src.height;
-            };
-            GLImageInput.prototype.apply = function (gl) {
-                gl.activeTexture(gl.TEXTURE0);
+            ImageSupplier.prototype.apply = function (gl) {
                 gl.bindTexture(gl.TEXTURE_2D, this.texture);
                 if (gl !== this.context) {
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.src);
                     this.context = gl;
                 }
+                this.target.texturize(this.texture, this.src.width, this.src.height);
             };
-            return GLImageInput;
+            return ImageSupplier;
         })();
-        VJ.GLImageInput = GLImageInput;
+        VJ.ImageSupplier = ImageSupplier;
         /**
          * HTML Video -> Texture operation.
          */
-        var GLVideoInput = (function () {
-            function GLVideoInput(src, texture) {
+        var VideoSupplier = (function () {
+            function VideoSupplier(src, texture) {
                 if (texture === void 0) { texture = null; }
                 this.src = src;
                 this.bind(texture);
             }
-            GLVideoInput.prototype.bind = function (texture) {
+            VideoSupplier.prototype.bind = function (texture) {
                 this.texture = texture;
                 this.reload();
             };
-            GLVideoInput.prototype.reload = function () {
+            VideoSupplier.prototype.register = function (target) {
+                this.target = target;
+            };
+            VideoSupplier.prototype.reload = function () {
                 this.context = null;
             };
-            GLVideoInput.prototype.width = function () {
-                return this.src.videoWidth;
-            };
-            GLVideoInput.prototype.height = function () {
-                return this.src.videoHeight;
-            };
-            GLVideoInput.prototype.apply = function (gl) {
-                gl.activeTexture(gl.TEXTURE0);
+            VideoSupplier.prototype.apply = function (gl) {
                 gl.bindTexture(gl.TEXTURE_2D, this.texture);
                 if (gl !== this.context) {
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.src);
                     this.context = gl;
                 }
+                this.target.texturize(this.texture, this.src.videoWidth, this.src.videoHeight);
             };
-            return GLVideoInput;
+            return VideoSupplier;
         })();
-        VJ.GLVideoInput = GLVideoInput;
-        var GLFramebufferInput = (function () {
-            function GLFramebufferInput(src, texture, fbo) {
+        VJ.VideoSupplier = VideoSupplier;
+        var FramebufferSupplier = (function () {
+            function FramebufferSupplier(scn, texture, fbo) {
                 if (texture === void 0) { texture = null; }
                 if (fbo === void 0) { fbo = null; }
-                this.src = src;
+                this.scn = scn;
                 this.bind(texture);
                 this.framebuffer(fbo);
             }
-            GLFramebufferInput.prototype.bind = function (texture) {
+            FramebufferSupplier.prototype.bind = function (texture) {
                 this.texture = texture;
                 this.context = null;
             };
-            GLFramebufferInput.prototype.framebuffer = function (fbo) {
+            FramebufferSupplier.prototype.register = function (target) {
+                this.target = target;
+            };
+            FramebufferSupplier.prototype.framebuffer = function (fbo) {
                 this.fbo = fbo;
                 this.context = null;
             };
-            GLFramebufferInput.prototype.width = function () {
-                return this.src.width();
-            };
-            GLFramebufferInput.prototype.height = function () {
-                return this.src.height();
-            };
-            GLFramebufferInput.prototype.apply = function (gl) {
+            FramebufferSupplier.prototype.apply = function (gl) {
                 gl.bindTexture(gl.TEXTURE_2D, this.texture);
                 if (gl !== this.context) {
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width(), this.height(), 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.scn.width(), this.scn.height(), 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
                 }
                 gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
                 if (gl !== this.context) {
                     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
                     this.context = gl;
                 }
-                this.src.apply(gl);
+                this.scn.apply(gl);
                 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
                 gl.bindTexture(gl.TEXTURE_2D, this.texture);
+                this.target.texturize(this.texture, this.scn.width(), this.scn.height());
             };
-            return GLFramebufferInput;
+            return FramebufferSupplier;
         })();
-        VJ.GLFramebufferInput = GLFramebufferInput;
+        VJ.FramebufferSupplier = FramebufferSupplier;
         /**
-         * Vertex Array Object.
+         * Rectangle Vertex Array Object.
          *
          * Transforms <x,y,width,height>-Tuples to a pair of Vertex/Index Buffers.
          */
-        var GLRectangleVertexArray = (function () {
-            function GLRectangleVertexArray(vertexBuffer, indexBuffer) {
+        var Rectangle = (function () {
+            function Rectangle(vertexBuffer, indexBuffer) {
                 if (vertexBuffer === void 0) { vertexBuffer = null; }
                 if (indexBuffer === void 0) { indexBuffer = null; }
                 this.vertices = new Float32Array(8);
@@ -122,13 +114,13 @@ var WebDJS;
                 this.translate(0, 0);
                 this.resize(1, 1);
             }
-            GLRectangleVertexArray.prototype.bind = function (vertexBuffer, indexBuffer) {
+            Rectangle.prototype.bind = function (vertexBuffer, indexBuffer) {
                 this.vertexBuffer = vertexBuffer;
                 this.indexBuffer = indexBuffer;
                 this.changed = true;
                 this.context = null;
             };
-            GLRectangleVertexArray.prototype.translate = function (x, y) {
+            Rectangle.prototype.translate = function (x, y) {
                 this.x = x;
                 this.y = y;
                 this.vertices[0] = this.x;
@@ -137,7 +129,7 @@ var WebDJS;
                 this.vertices[6] = this.x;
                 this.changed = true;
             };
-            GLRectangleVertexArray.prototype.resize = function (width, height) {
+            Rectangle.prototype.resize = function (width, height) {
                 this.width = width;
                 this.height = height;
                 this.vertices[2] = this.x + this.width;
@@ -146,7 +138,7 @@ var WebDJS;
                 this.vertices[7] = this.y + this.height;
                 this.changed = true;
             };
-            GLRectangleVertexArray.prototype.apply = function (gl) {
+            Rectangle.prototype.apply = function (gl) {
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
                 if (this.changed || gl !== this.context) {
                     gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.STATIC_DRAW);
@@ -158,48 +150,43 @@ var WebDJS;
                     this.context = gl;
                 }
             };
-            return GLRectangleVertexArray;
+            return Rectangle;
         })();
-        VJ.GLRectangleVertexArray = GLRectangleVertexArray;
+        VJ.Rectangle = Rectangle;
         /**
          * Simple Renderer - Render HTML Image/Video to GL context.
          */
         var Simple = (function () {
-            function Simple(input, texture) {
-                if (input === void 0) { input = null; }
-                if (texture === void 0) { texture = null; }
+            function Simple() {
                 this.yflip = 1;
-                this.vertexArray = new GLRectangleVertexArray();
+                this.vertexArray = new Rectangle();
                 this.rgba = new Float32Array([1, 1, 1, 1]);
                 this.recolor = true;
                 this.rebind = false;
                 this.flipped = false;
-                this.inlet(input);
-                this.bind(texture);
             }
-            Simple.prototype.inlet = function (input) {
-                this.input = input;
-                this.rebind = true;
-            };
-            Simple.prototype.color = function (r, g, b, a) {
-                this.rgba[0] = r;
-                this.rgba[1] = g;
-                this.rgba[2] = b;
-                this.rgba[3] = a;
+            Simple.prototype.colorize = function (red, green, blue, alpha) {
+                this.rgba[0] = red;
+                this.rgba[1] = green;
+                this.rgba[2] = blue;
+                this.rgba[3] = alpha;
                 this.recolor = true;
             };
             Simple.prototype.flipy = function (yflip) {
                 this.yflip = yflip;
                 this.flipped = true;
             };
-            Simple.prototype.bind = function (texture) {
-                this.texture = texture;
-            };
             Simple.prototype.width = function () {
-                return this.input.width();
+                return this.textureWidth;
             };
             Simple.prototype.height = function () {
-                return this.input.height();
+                return this.textureHeight;
+            };
+            Simple.prototype.texturize = function (texture, width, height) {
+                this.texture = texture;
+                this.textureWidth = width;
+                this.textureHeight = height;
+                this.rebind = true;
             };
             Simple.prototype.apply = function (gl) {
                 if (gl !== this.context) {
@@ -227,10 +214,9 @@ var WebDJS;
                     this.vertexArray.bind(this.vertexBuffer, this.indexBuffer);
                 }
                 if (this.rebind || gl !== this.context) {
-                    this.input.bind(this.texture);
+                    gl.bindTexture(gl.TEXTURE_2D, this.texture);
                     this.rebind = false;
                 }
-                this.input.apply(gl);
                 this.vertexArray.apply(gl);
                 gl.useProgram(this.shaderProgram);
                 if (this.recolor || gl !== this.context) {
@@ -253,34 +239,29 @@ var WebDJS;
         })();
         VJ.Simple = Simple;
         var Convolver = (function () {
-            function Convolver(input, texture) {
-                if (input === void 0) { input = null; }
-                if (texture === void 0) { texture = null; }
+            function Convolver() {
                 this.kernel = new Float32Array([0, 0, 0, 0, 1, 0, 0, 0, 0]);
-                this.vertexArray = new GLRectangleVertexArray();
+                this.vertexArray = new Rectangle();
                 this.rebind = false;
                 this.changed = false;
                 this.flipped = false;
                 this.yflip = 1;
-                this.inlet(input);
-                this.bind(texture);
             }
-            Convolver.prototype.inlet = function (input) {
-                this.input = input;
-                this.rebind = true;
-            };
             Convolver.prototype.transform = function (kernel) {
                 this.kernel = kernel;
                 this.changed = true;
             };
-            Convolver.prototype.bind = function (texture) {
-                this.texture = texture;
-            };
             Convolver.prototype.width = function () {
-                return this.input.width();
+                return this.textureWidth;
             };
             Convolver.prototype.height = function () {
-                return this.input.height();
+                return this.textureHeight;
+            };
+            Convolver.prototype.texturize = function (texture, width, height) {
+                this.texture = texture;
+                this.textureWidth = width;
+                this.textureHeight = height;
+                this.rebind = true;
             };
             Convolver.prototype.flipy = function (yflip) {
                 this.yflip = yflip;
@@ -312,13 +293,13 @@ var WebDJS;
                     gl.uniform1f(this.flipyLocation, this.yflip);
                 }
                 if (this.rebind || gl !== this.context) {
-                    this.input.bind(this.texture);
+                    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+                    this.rebind = false;
                 }
-                this.input.apply(gl);
                 this.vertexArray.apply(gl);
                 gl.useProgram(this.shaderProgram);
                 if (this.rebind || gl !== this.context) {
-                    gl.uniform2f(this.tsizeLocation, this.input.width(), this.input.height());
+                    gl.uniform2f(this.tsizeLocation, this.textureWidth, this.textureHeight);
                     this.rebind = false;
                 }
                 if (this.changed || gl !== this.context) {
@@ -339,30 +320,19 @@ var WebDJS;
             return Convolver;
         })();
         VJ.Convolver = Convolver;
-        var ColorController = (function () {
-            function ColorController(renderer, r, g, b, a) {
-                this.renderer = renderer;
-                this.red(r);
-                this.green(g);
-                this.blue(b);
+        var Colorizer = (function () {
+            function Colorizer(target, rGen, gGen, bGen, aGen) {
+                this.target = target;
+                this.rGen = rGen;
+                this.gGen = gGen;
+                this.bGen = bGen;
+                this.aGen = aGen;
             }
-            ColorController.prototype.red = function (r) {
-                this.r = r;
+            Colorizer.prototype.send = function () {
+                this.target.colorize(this.rGen(), this.gGen(), this.bGen(), this.aGen());
             };
-            ColorController.prototype.green = function (g) {
-                this.g = g;
-            };
-            ColorController.prototype.blue = function (b) {
-                this.b = b;
-            };
-            ColorController.prototype.alpha = function (a) {
-                this.a = a;
-            };
-            ColorController.prototype.send = function () {
-                this.renderer.color(this.r(), this.g(), this.b(), this.a());
-            };
-            return ColorController;
+            return Colorizer;
         })();
-        VJ.ColorController = ColorController;
+        VJ.Colorizer = Colorizer;
     })(VJ = WebDJS.VJ || (WebDJS.VJ = {}));
 })(WebDJS || (WebDJS = {}));

@@ -53,37 +53,68 @@
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
             
+            var texture3 = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture3);        
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            
+            var vinput = new WebDJS.VJ.VideoSupplier(video, texture1);
+            
             var renderer = new WebDJS.VJ.Convolver();
-            var vinput = new WebDJS.VJ.GLVideoInput(video);
-            renderer.inlet(vinput);
-            renderer.bind(texture1);
             renderer.transform(new Float32Array([
                 1,  2,  1,
                 0,  0,  0,
                -1, -2, -1
             ]));
+            vinput.register(renderer);
+            
+            var renderer2 = new WebDJS.VJ.Convolver();
+            renderer.transform(new Float32Array([
+                -1,  0,  1,
+                -2,  0,  2,
+                -1,  0,  1
+            ]));
+            
+            var renderer3 = new WebDJS.VJ.Simple();
             
             var fbo = gl.createFramebuffer();
-            var fbinput = new WebDJS.VJ.GLFramebufferInput(renderer);
-            fbinput.framebuffer(fbo);
+            var fbinput = new WebDJS.VJ.FramebufferSupplier(renderer, texture2, fbo);
+            fbinput.register(renderer2);
             
-            var renderer2 = new WebDJS.VJ.Simple();
-            renderer2.inlet(fbinput);
-            renderer2.bind(texture2);
+            var fbo2 = gl.createFramebuffer();
+            var fbinput2 = new WebDJS.VJ.FramebufferSupplier(renderer2, texture3, fbo2);
+            fbinput2.register(renderer3);
+            
+            /*
+            var fbo2 = gl.createFramebuffer();
+            var fbinput2 = new WebDJS.VJ.GLFramebufferInput(renderer2);
+            fbinput2.framebuffer(fbo);
+            
+            var renderer3 = new WebDJS.VJ.Convolver();
+            renderer3.inlet(fbinput2);
+            renderer3.bind(texture3);
             //renderer2.color(1,1,1,1);
-            renderer2.flipy(-1);
+            renderer3.flipy(-1);*/
             
-            var colorControl = new WebDJS.VJ.ColorController(renderer2);
-            colorControl.red(function(){return document.getElementById("R-bar").value/255;});
-            colorControl.green(function(){return document.getElementById("G-bar").value/255;});
-            colorControl.blue(function(){return document.getElementById("B-bar").value/255;});
-            colorControl.alpha(function(){return document.getElementById("Alpha-bar").value/255;});
+            var colorControl = new WebDJS.VJ.Colorizer(
+                renderer3, 
+                function(){return document.getElementById("R-bar").value/255;}, 
+                function(){return document.getElementById("G-bar").value/255;},
+                function(){return document.getElementById("B-bar").value/255;},
+                function(){return document.getElementById("Alpha-bar").value/255;});
             
             function renderLoop() {
                 gl.clear(gl.COLOR_BUFFER_BIT);
                 if (videoReady) {
                     vinput.reload();
-                    renderer2.apply(gl);
+                    vinput.apply(gl);
+                    
+                    fbinput.apply(gl);
+                    fbinput2.apply(gl);
+                    
+                    renderer3.apply(gl);
                 }
                 window.requestAnimationFrame(renderLoop);
             }

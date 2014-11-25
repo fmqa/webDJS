@@ -3,32 +3,41 @@ module WebDJS {
 	    /**
 	     * Generic OpenGL operation.
 	     */
-        export interface GLOperation {
+        export interface Command {
             apply(gl : WebGLRenderingContext) : void;
         }
         
-        /**
-         * Generic OpenGL texture operation.
-         */
-        export interface GLTextureOperation extends GLOperation {
-            bind(texture : WebGLTexture) : void;
+        export interface Scene extends Command {
+            width() : number;
+            height() : number;
         }
         
         /**
-         * Loads a fixed-size image to a texture.
+         * Generic OpenGL texture consumer.
          */
-        export interface GLSizedTextureOperation extends GLTextureOperation {
-            width() : number;
-            height() : number;
+        export interface Consumer {
+            texturize(texture : WebGLTexture, width : number, height : number) : void;
+        }
+        
+        /**
+         * Generic OpenGL texture provider.
+         */
+        export interface Supplier {
+            register(target : Consumer) : void;
+        }
+        
+        export interface Colorizable {
+            colorize(red : number, green : number, blue : number, alpha : number) : void;
         }
 		
 		/**
 		 * HTML Image -> Texture operation.
 		 */
-        export class GLImageInput implements GLSizedTextureOperation {
+        export class ImageSupplier implements Command, Supplier {
 	        private src : HTMLImageElement;
 	        private texture : WebGLTexture;
 	        private context : WebGLRenderingContext;
+	        private target : Consumer;
 	        constructor(src : HTMLImageElement, texture : WebGLTexture = null) { 
 	            this.src = src; 
 	            this.bind(texture);
@@ -37,32 +46,30 @@ module WebDJS {
 	            this.texture = texture;
 	            this.reload();
 	        }
+	        register(target : Consumer) : void {
+	            this.target = target;
+	        }
 	        reload() : void {
 	            this.context = null;
 	        }
-	        width() : number {
-	            return this.src.width;
-	        }
-	        height() : number {
-	            return this.src.height;
-	        }
 	        apply(gl : WebGLRenderingContext) : void {
-	            gl.activeTexture(gl.TEXTURE0);
 	            gl.bindTexture(gl.TEXTURE_2D, this.texture);
 	            if (gl !== this.context) {
     		        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.src);
     		        this.context = gl;
     		    }
+    		    this.target.texturize(this.texture, this.src.width, this.src.height);
 	        }
         }
 		
 		/**
 		 * HTML Video -> Texture operation.
 		 */
-	    export class GLVideoInput implements GLSizedTextureOperation {
+	    export class VideoSupplier implements Command, Supplier {
 		    private src : HTMLVideoElement;
 		    private texture : WebGLTexture;
 		    private context : WebGLRenderingContext;
+		    private target : Consumer;
 		    constructor(src : HTMLVideoElement, texture : WebGLTexture = null) { 
 		        this.src = src; 
 		        this.bind(texture);
@@ -71,32 +78,30 @@ module WebDJS {
 		        this.texture = texture;
 		        this.reload();
 		    }
+		    register(target : Consumer) : void {
+		        this.target = target;
+		    }
 		    reload() : void {
 		        this.context = null;
 		    }
-		    width() : number {
-		        return this.src.videoWidth;
-		    }
-		    height() : number {
-		        return this.src.videoHeight;
-		    }
 		    apply(gl : WebGLRenderingContext) : void {
-		        gl.activeTexture(gl.TEXTURE0);
 		        gl.bindTexture(gl.TEXTURE_2D, this.texture);
 		        if (gl !== this.context) {
     			    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.src);
     			    this.context = gl;
     			}
+    			this.target.texturize(this.texture, this.src.videoWidth, this.src.videoHeight);
 		    }
 	    }
 	    
-	    export class GLFramebufferInput implements GLSizedTextureOperation {
+	    export class FramebufferSupplier implements Command, Supplier {
 	        private context : WebGLRenderingContext;
-	        private src : GLSizedTextureOperation;
+	        private scn : Scene;
 	        private texture : WebGLTexture;
 	        private fbo : WebGLFramebuffer;
-	        constructor(src : GLSizedTextureOperation, texture : WebGLTexture = null, fbo : WebGLFramebuffer = null) {
-	            this.src = src;
+	        private target : Consumer;
+	        constructor(scn : Scene, texture : WebGLTexture = null, fbo : WebGLFramebuffer = null) {
+	            this.scn = scn;
 	            this.bind(texture);
 	            this.framebuffer(fbo);
 	        }
@@ -104,38 +109,36 @@ module WebDJS {
 		        this.texture = texture;
 		        this.context = null;
 		    }
+		    register(target : Consumer) : void {
+		        this.target = target;
+		    }
 		    framebuffer(fbo : WebGLFramebuffer) : void {
 		        this.fbo = fbo;
 		        this.context = null;
 		    }
-		    width() : number {
-		        return this.src.width();
-		    }
-		    height() : number {
-		        return this.src.height();
-		    }
 		    apply(gl : WebGLRenderingContext) : void {
 		        gl.bindTexture(gl.TEXTURE_2D, this.texture);
 	            if (gl !== this.context) {
-	                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width(), this.height(), 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+	                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.scn.width(), this.scn.height(), 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 	            }
 	            gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
 	            if (gl !== this.context) {
 	                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
 	                this.context = gl;
 	            }
-	            this.src.apply(gl);
+	            this.scn.apply(gl);
 	            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+	            this.target.texturize(this.texture, this.scn.width(), this.scn.height());
 		    }
 	    }
 		
 		/**
-		 * Vertex Array Object.
+		 * Rectangle Vertex Array Object.
 		 *
 		 * Transforms <x,y,width,height>-Tuples to a pair of Vertex/Index Buffers.
 		 */
-	    export class GLRectangleVertexArray implements GLOperation {
+	    export class Rectangle implements Command {
 		    private width : number;
 		    private height : number;
 		    private x : number;
@@ -192,12 +195,13 @@ module WebDJS {
 		/**
 		 * Simple Renderer - Render HTML Image/Video to GL context.
 		 */
-        export class Simple implements GLSizedTextureOperation {
-            private input : GLSizedTextureOperation;
+        export class Simple implements Scene, Consumer, Colorizable {
             private vertexShader : WebGLShader;
             private fragmentShader : WebGLShader;
             private shaderProgram : WebGLProgram;
             private texture : WebGLTexture;
+            private textureWidth : number;
+            private textureHeight : number;
             private xyLocation : number;
             private yflip : number = 1;
             private samplerLocation : WebGLUniformLocation;
@@ -205,39 +209,34 @@ module WebDJS {
             private flipyLocation : WebGLUniformLocation;
             private vertexBuffer : WebGLBuffer;
             private indexBuffer : WebGLBuffer;
-            private vertexArray : GLRectangleVertexArray = new GLRectangleVertexArray();
+            private vertexArray : Rectangle = new Rectangle();
             private rgba : Float32Array = new Float32Array([1,1,1,1]);
             private context : WebGLRenderingContext;
             private recolor : boolean = true;
             private rebind : boolean = false;
             private flipped : boolean = false;
-            constructor(input : GLSizedTextureOperation = null, texture : WebGLTexture = null) {
-                this.inlet(input);
-                this.bind(texture);
-            }
-            inlet(input : GLSizedTextureOperation) : void {
-                this.input = input;
-                this.rebind = true;
-            }
-            color(r : number, g : number, b : number, a : number) : void {
-                this.rgba[0] = r;
-                this.rgba[1] = g;
-                this.rgba[2] = b;
-                this.rgba[3] = a;
+            colorize(red : number, green : number, blue : number, alpha : number) : void {
+                this.rgba[0] = red;
+                this.rgba[1] = green;
+                this.rgba[2] = blue;
+                this.rgba[3] = alpha;
                 this.recolor = true;
             }
             flipy(yflip : number) : void {
                 this.yflip = yflip;
                 this.flipped = true;
             }
-            bind(texture : WebGLTexture) : void {
-                this.texture = texture;
-            }
             width() : number {
-                return this.input.width();
+                return this.textureWidth;
             }
             height() : number {
-                return this.input.height();
+                return this.textureHeight;
+            }
+            texturize(texture : WebGLTexture, width : number, height : number) : void {
+                this.texture = texture;
+                this.textureWidth = width;
+                this.textureHeight = height;
+                this.rebind = true;
             }
             apply(gl : WebGLRenderingContext) : void {
                 if (gl !== this.context) {
@@ -285,21 +284,13 @@ module WebDJS {
                     this.vertexBuffer = gl.createBuffer();
                     this.indexBuffer = gl.createBuffer();
                     this.vertexArray.bind(this.vertexBuffer, this.indexBuffer);
-                    
-                    //this.texture = gl.createTexture();
-                    //gl.bindTexture(gl.TEXTURE_2D, this.texture);        
-                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 }
                 
                 if (this.rebind || gl !== this.context) {
-                    this.input.bind(this.texture);
+                    gl.bindTexture(gl.TEXTURE_2D, this.texture);
                     this.rebind = false;
                 }
                 
-                this.input.apply(gl);
                 this.vertexArray.apply(gl);
                 
                 gl.useProgram(this.shaderProgram);
@@ -326,10 +317,11 @@ module WebDJS {
             }
         }
         
-        export class Convolver implements GLSizedTextureOperation {
+        export class Convolver implements Scene, Consumer {
             private context : WebGLRenderingContext;
             private texture : WebGLTexture;
-            private input : GLSizedTextureOperation;
+            private textureWidth : number;
+            private textureHeight : number;
             private kernel : Float32Array = new Float32Array([0,0,0,0,1,0,0,0,0]);
             private vertexShader : WebGLShader;
             private fragmentShader : WebGLShader;
@@ -339,33 +331,28 @@ module WebDJS {
             private tsizeLocation : WebGLUniformLocation;
             private kernelLocation : WebGLUniformLocation;
             private flipyLocation : WebGLUniformLocation;
-            private vertexArray : GLRectangleVertexArray = new GLRectangleVertexArray();
+            private vertexArray : Rectangle = new Rectangle();
             private vertexBuffer : WebGLBuffer;
             private indexBuffer : WebGLBuffer;
             private rebind : boolean = false;
             private changed : boolean = false;
             private flipped : boolean = false;
             private yflip : number = 1;
-            constructor(input : GLSizedTextureOperation = null, texture : WebGLTexture = null) {
-                this.inlet(input);
-                this.bind(texture);
-            }
-            inlet(input : GLSizedTextureOperation) : void {
-                this.input = input;
-                this.rebind = true;
-            }
             transform(kernel : Float32Array) : void {
                 this.kernel = kernel;
                 this.changed = true;
             }
-            bind(texture : WebGLTexture) : void {
-                this.texture = texture;
-            }
             width() : number {
-                return this.input.width();
+                return this.textureWidth;
             }
             height() : number {
-                return this.input.height();
+                return this.textureHeight;
+            }
+            texturize(texture : WebGLTexture, width : number, height : number) : void {
+                this.texture = texture;
+                this.textureWidth = width;
+                this.textureHeight = height;
+                this.rebind = true;
             }
             flipy(yflip : number) : void {
                 this.yflip = yflip;
@@ -439,26 +426,19 @@ module WebDJS {
                     
                     this.flipyLocation = gl.getUniformLocation(this.shaderProgram, "flipy");
                     gl.uniform1f(this.flipyLocation, this.yflip);
-                    
-                    //this.texture = gl.createTexture();
-                    //gl.bindTexture(gl.TEXTURE_2D, this.texture);        
-                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 }
                 
                 if (this.rebind || gl !== this.context) {
-                    this.input.bind(this.texture);
+                    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+                    this.rebind = false;
                 }
                 
-                this.input.apply(gl);
                 this.vertexArray.apply(gl);
                 
                 gl.useProgram(this.shaderProgram);
                 
                 if (this.rebind || gl !== this.context) {
-                    gl.uniform2f(this.tsizeLocation, this.input.width(), this.input.height());
+                    gl.uniform2f(this.tsizeLocation, this.textureWidth, this.textureHeight);
                     this.rebind = false;
                 }
                 
@@ -483,36 +463,25 @@ module WebDJS {
             }
         }
         
-        export interface ChannelSupplier {
+        export interface Generator {
             () : number;
         }
         
-        export class ColorController {
-            private renderer : Simple;
-            private r : ChannelSupplier;
-            private g : ChannelSupplier;
-            private b : ChannelSupplier;
-            private a : ChannelSupplier;
-            constructor(renderer : Simple, r : ChannelSupplier, g : ChannelSupplier, b : ChannelSupplier, a : ChannelSupplier) {
-                this.renderer = renderer;
-                this.red(r);
-                this.green(g);
-                this.blue(b);
-            }
-            red(r : ChannelSupplier) : void {
-                this.r = r;
-            }
-            green(g : ChannelSupplier) : void {
-                this.g = g;
-            }
-            blue(b : ChannelSupplier) : void {
-                this.b = b;
-            }
-            alpha(a : ChannelSupplier) : void {
-                this.a = a;
+        export class Colorizer {
+            private target : Colorizable;
+            private rGen : Generator;
+            private gGen : Generator;
+            private bGen : Generator;
+            private aGen : Generator;
+            constructor(target : Colorizable, rGen : Generator, gGen : Generator, bGen : Generator, aGen : Generator) {
+                this.target = target;
+                this.rGen = rGen;
+                this.gGen = gGen;
+                this.bGen = bGen;
+                this.aGen = aGen;
             }
             send() : void {
-                this.renderer.color(this.r(), this.g(), this.b(), this.a());
+                this.target.colorize(this.rGen(), this.gGen(), this.bGen(), this.aGen());
             }
         }
     }
