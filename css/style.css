@@ -1,6 +1,6 @@
 body {
 	background-color: #2C3539;
-	margin: 10px;
+	margin-left: -30px;
 }
 
 section {
@@ -20,7 +20,7 @@ table tr td {
 
 .setups {
 	height: auto;
-	margin-right: 20px;
+	margin-right: 10px;
 	text-align: left;
 	font-size: 15px;
 	color: gray;
@@ -47,7 +47,7 @@ table tr td {
 
 .setupsSection {
 	margin-top: 10px;
-	text-align: center;
+	/*text-align: center;*/
 }
 
 .setupDiv {
@@ -55,12 +55,13 @@ table tr td {
 	width: 40%;
 	height: 100%;
 	margin: 0 auto;
-	display: inline-block;
+	/*display: inline-block;*/
 }
 
 .setupHead {
 	background-image: linear-gradient(to bottom, #2C3539 0px, black 100%) !important;
 	color: lightgray !important;
+	width: 150px;
 }
 
 #canvas {
