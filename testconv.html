@@ -36,9 +36,6 @@
             video.src = "assets/video.mp4";
             video.play();
             
-            gl.enable(gl.BLEND);
-            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-            
             var texture1 = gl.createTexture();
             gl.bindTexture(gl.TEXTURE_2D, texture1);        
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -55,6 +52,20 @@
             
             var texture3 = gl.createTexture();
             gl.bindTexture(gl.TEXTURE_2D, texture3);        
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            
+            var texture4 = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture4);        
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+            var texture5 = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture5);        
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -78,6 +89,7 @@
             ]));
             
             var renderer3 = new WebDJS.VJ.Simple();
+            renderer3.flipy(-1);
             
             var fbo = gl.createFramebuffer();
             var fbinput = new WebDJS.VJ.FramebufferSupplier(renderer, texture2, fbo);
@@ -87,16 +99,8 @@
             var fbinput2 = new WebDJS.VJ.FramebufferSupplier(renderer2, texture3, fbo2);
             fbinput2.register(renderer3);
             
-            /*
-            var fbo2 = gl.createFramebuffer();
-            var fbinput2 = new WebDJS.VJ.GLFramebufferInput(renderer2);
-            fbinput2.framebuffer(fbo);
-            
-            var renderer3 = new WebDJS.VJ.Convolver();
-            renderer3.inlet(fbinput2);
-            renderer3.bind(texture3);
-            //renderer2.color(1,1,1,1);
-            renderer3.flipy(-1);*/
+            var fbo3 = gl.createFramebuffer();
+            var fbinput3 = new WebDJS.VJ.FramebufferSupplier(renderer3, texture4, fbo3);
             
             var colorControl = new WebDJS.VJ.Colorizer(
                 renderer3, 
@@ -104,6 +108,25 @@
                 function(){return document.getElementById("G-bar").value/255;},
                 function(){return document.getElementById("B-bar").value/255;},
                 function(){return document.getElementById("Alpha-bar").value/255;});
+            
+            
+            var video2 = document.createElement("video");
+            var videoReady2 = false;
+            video2.autoplay = true;
+            video2.loop = true;
+            video2.oncanplay = function() {
+                videoReady2 = true;
+            }
+            video2.src = "assets/video2.mp4";
+            video2.play();
+            
+            var video2vinput = new WebDJS.VJ.VideoSupplier(video2, texture5);
+            
+            var mixer = new WebDJS.VJ.Mixer();
+            //mixer.fade(0.5);
+            //mixer.fade(1.0);
+            video2vinput.register(mixer.left());
+            fbinput3.register(mixer.right());
             
             function renderLoop() {
                 gl.clear(gl.COLOR_BUFFER_BIT);
@@ -113,8 +136,14 @@
                     
                     fbinput.apply(gl);
                     fbinput2.apply(gl);
-                    
-                    renderer3.apply(gl);
+                    fbinput3.apply(gl);
+                }
+                if (videoReady2) {
+                    video2vinput.reload();
+                    video2vinput.apply(gl);
+                }
+                if (videoReady && videoReady2) {
+                    mixer.apply(gl);
                 }
                 window.requestAnimationFrame(renderLoop);
             }
@@ -207,6 +236,15 @@
 															<input type="number" min="0"  max="255" class="filterinput" id="Alpha-parameter" value="255">
 														</td>
 													</tr>
+											        <tr>
+														<td>
+															<b>Fade</b>
+															<input type="range" min="0" max="255" id="Fade-bar" value="255">
+														</td>
+														<td>
+															<input type="number" min="0"  max="255" class="filterinput" id="Fade-parameter" value="255">
+														</td>
+													</tr>
 												</table>	
 								</div>
 							</td>
@@ -271,6 +309,20 @@
 				document.getElementById("Alpha-bar").value = document.getElementById("Alpha-parameter").value;
 				colorControl.send();
 			}, false);
+			
+			document.getElementById("Fade-bar").value = document.getElementById("Fade-parameter").value = 127;
+			mixer.fade(document.getElementById("Fade-bar").value / 255);
+			document.getElementById("Fade-bar").addEventListener("change", function() {
+				document.getElementById("Fade-parameter").value = document.getElementById("Fade-bar").value;
+				mixer.fade(document.getElementById("Fade-bar").value / 255);
+				console.log(document.getElementById("Fade-bar").value / 255);
+			}, false);
+			document.getElementById("Fade-parameter").addEventListener("change", function() {
+				document.getElementById("Fade-bar").value = document.getElementById("Fade-parameter").value;
+				mixer.fade(document.getElementById("Fade-bar").value / 255);
+				console.log(document.getElementById("Fade-bar").value / 255);
+			}, false);
+			
 			
 			document.getElementById("vol").addEventListener("change", function() {
 				video.volume = document.getElementById("vol").value/100;

@@ -29,6 +29,26 @@ module WebDJS {
         export interface Colorizable {
             colorize(red : number, green : number, blue : number, alpha : number) : void;
         }
+        
+        export class StoreConsumer implements Consumer {
+            private texture : WebGLTexture;
+            private w : number;
+            private h : number;
+            texturize(texture : WebGLTexture, width : number, height : number) : void {
+                this.texture = texture;
+                this.w = width;
+                this.h = height;
+            }
+            get() : WebGLTexture {
+                return this.texture;
+            }
+            width() : number {
+                return this.w;
+            }
+            height() : number {
+                return this.h;
+            }
+        }
 		
 		/**
 		 * HTML Image -> Texture operation.
@@ -460,6 +480,135 @@ module WebDJS {
                 
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
                 gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+            }
+        }
+        
+        export class Mixer implements Scene {
+            private l : StoreConsumer = new StoreConsumer();
+            private r : StoreConsumer = new StoreConsumer();
+            private context : WebGLRenderingContext;
+            private vertexShader : WebGLShader;
+            private fragmentShader : WebGLShader;
+            private shaderProgram : WebGLProgram;
+            private vertexArray : Rectangle = new Rectangle();
+            private vertexBuffer : WebGLBuffer;
+            private indexBuffer : WebGLBuffer;
+            private xyLocation : number;
+            private flipyLocation : WebGLUniformLocation;
+            private samplerOneLocation : WebGLUniformLocation;
+            private samplerTwoLocation : WebGLUniformLocation;
+            private fadeLocation : WebGLUniformLocation;
+            private yflip : number = 1;
+            private flipped : boolean = false;
+            private fadeValue : number = 0;
+            private faded : boolean = false;
+            left() : Consumer {
+                return this.l;
+            }
+            right() : Consumer {
+                return this.r;
+            }
+            width() : number {
+                return this.l.width();
+            }
+            height() : number {
+                return this.l.height();
+            }
+            flipy(yflip : number) : void {
+                this.yflip = yflip;
+                this.flipped = true;
+            }
+            fade(value : number) : void {
+                this.fadeValue = value;
+                this.faded = true;
+            }
+            apply(gl : WebGLRenderingContext) : void {
+                if (gl !== this.context) {
+                    this.vertexShader = gl.createShader(gl.VERTEX_SHADER);
+                    gl.shaderSource(this.vertexShader,
+                        "attribute vec2 vxy;" +
+                        "varying vec2 txy;" +
+                        "uniform float flipy;" +
+                        "void main() {" +
+                        "   gl_Position = vec4(vxy.x*2.0-1.0, (1.0-vxy.y*2.0)*flipy, 0, 1);" +
+                        "   txy = vxy;" +
+                        "}");
+                    gl.compileShader(this.vertexShader);
+                    
+                    this.fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+                    gl.shaderSource(this.fragmentShader,
+                        "precision mediump float;" +
+                        "uniform sampler2D samplerOne;" +
+                        "uniform sampler2D samplerTwo;" +
+                        "uniform float fade;" +
+                        "varying vec2 txy;" +
+                        "void main() {" +
+                        "   vec4 texOneColor = texture2D(samplerOne, txy);" +
+                        "   vec4 texTwoColor = texture2D(samplerTwo, txy);" +
+                        "   gl_FragColor = (texOneColor * (1.0 - fade)) + (texTwoColor * fade);" +
+                        "}");
+                    gl.compileShader(this.fragmentShader);
+                    
+                    this.shaderProgram = gl.createProgram();
+                    gl.attachShader(this.shaderProgram, this.vertexShader);
+                    gl.attachShader(this.shaderProgram, this.fragmentShader);
+                    gl.linkProgram(this.shaderProgram);
+                    gl.useProgram(this.shaderProgram);
+                    
+                    this.vertexBuffer = gl.createBuffer();
+                    this.indexBuffer = gl.createBuffer();
+                    this.vertexArray.bind(this.vertexBuffer, this.indexBuffer);
+                    
+                    this.xyLocation = gl.getAttribLocation(this.shaderProgram, "vxy");
+                    gl.enableVertexAttribArray(this.xyLocation);
+                    
+                    this.flipyLocation = gl.getUniformLocation(this.shaderProgram, "flipy");
+                    gl.uniform1f(this.flipyLocation, this.yflip);
+                    
+                    this.samplerOneLocation = gl.getUniformLocation(this.shaderProgram, "samplerOne");
+                    gl.uniform1i(this.samplerOneLocation, 0);
+                    
+                    this.samplerTwoLocation = gl.getUniformLocation(this.shaderProgram, "samplerTwo");
+                    gl.uniform1i(this.samplerTwoLocation, 1);
+                    
+                    this.fadeLocation = gl.getUniformLocation(this.shaderProgram, "fade");
+                    gl.uniform1f(this.fadeLocation, this.fadeValue);
+                }
+                
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, this.l.get());
+                
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, this.r.get());
+                
+                this.vertexArray.apply(gl);
+                
+                gl.useProgram(this.shaderProgram);
+                
+                if (this.flipped || gl !== this.context) {
+                    gl.uniform1f(this.flipyLocation, this.yflip);
+                    this.flipped = false;
+                }
+                
+                if (this.faded || gl !== this.context) {
+                    gl.uniform1f(this.fadeLocation, this.fadeValue);
+                    this.faded = false;
+                }
+                
+                if (gl !== this.context) {
+                    this.context = gl;
+                }
+                
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+                gl.vertexAttribPointer(this.xyLocation, 2, gl.FLOAT, false, 0, 0);
+                
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+                gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+                
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, null);
+                
+                gl.activeTexture(gl.TEXTURE0);
             }
         }
         
