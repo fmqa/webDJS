@@ -1,0 +1,66 @@
+body {
+	background-color: black;
+	color: white;
+}
+
+table {
+	margin-top: 5px;
+	margin-left: 10%;
+	width: 50%;
+	text-align: center;
+
+}
+
+table tr td {
+	padding-bottom: 5px !important;
+	padding-left: 5px !important;
+	vertical-align: top !important;
+}
+
+canvas {
+	border: 1px solid grey;
+}
+
+.setups {
+	border-color: gray !important;
+	width: 100%;
+	background-color: #1C1C1C !important;
+	color: black;
+}
+
+.setupHead {
+	background-image: linear-gradient(to bottom, #2C3539 0px, black 100%) !important;
+	color: lightgray !important;
+	word-spacing: 200px;
+}
+
+.layout {
+	margin-left: 0;
+}
+
+.buttonSeite {
+	padding-left: 5px;
+}
+
+.fieldSeite {
+	padding-left: 20%;
+	width: 100%;
+}
+
+.volume {
+	color: white;
+}
+
+.numberbox {
+	width: 50px;
+}
+
+.labelTime {
+	border: none;
+	background-color: #1C1C1C;
+	color: white;
+}
+
+.Fader {
+	margin-left: 20% !important;
+}

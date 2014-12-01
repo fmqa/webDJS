@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> WebDJS - Version 3</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap-theme.min.css">
+		<link rel="stylesheet" type="text/css" href="style/style.css">
+	</head>
+	<body>
+		<table class="video">
+			<tr>
+				<td>
+					<canvas class="canvas" width="540" height="360">
+						-Hier Video-
+					</canvas>
+				</td>
+			</tr>
+		</table>	
+		<table>
+			<tr>
+				<td class="operationenLeft"> 
+					<div class="panel panel-default setups">
+						<div class="panel-heading setupHead">
+							L <input id="leftCtrl" type="checkbox"></input>
+						</div>
+						<table class="layout">
+							<tr>
+								<td class="buttonSeite">
+									<input id="loadLeftButtonLoad" type="button" value="Load"></input>
+								</td>
+								<td class="fieldSeite">
+									<input id="loadTextfield" type="textfield"></input>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<input id="loadLeftButtonPlay" type="button" value="Play"></input>
+								</td>
+								<td>
+									<input id="loadLeftButtonStop" type="button" value="Stop"></input>
+								</td>
+								<td>
+									<input id="loadLeftButtonReset" type="button" value="Reset"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Volume:
+								</td>
+								<td>
+									<input id="volumeLeft" type="range" min="0" max="100"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="volumeLeftField" type="number"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Speed:
+								</td>
+								<td>
+									<input id="speedLeft" type="range" min="0" max="200"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="speedLeftField" type="number"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Playing:
+								</td>
+								<td>
+									<input id="timeLeft" class="labelTime" type="label" value="HH:MM:SS" disabled></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									R
+								</td>
+								<td>
+									<input id="RLeft" type="range" min="0" max="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="RLeftField" type="number"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									G
+								</td>
+								<td>
+									<input id="GLeft" type="range" min="0" max="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="GLeftField" type="number"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									B
+								</td>
+								<td>
+									<input id="BLeft" type="range" min="0" max="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="BLeftField" type="number"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Filter 1:
+								</td>
+								<td>
+									<select>
+										<option value="NoFilt">-No Filter-</option>
+										<option value="Filt1">Filt1</option>
+										<option value="Filt2">Filt2</option>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Filter 2:
+								</td>
+								<td>
+									<select>
+										<option value="NoFilt">-No Filter-</option>
+										<option value="Filt1">Filt1</option>
+										<option value="Filt2">Filt2</option>
+									</select>
+								</td>
+							</tr>
+						</table>
+					</div>	
+				</td>
+				<td class="operationenRight">
+					<div class="panel panel-default setups">
+						<div class="panel-heading setupHead">
+							R <input id="rightCtrl" type="checkbox"></input>
+						</div>
+						<table class="layout">
+							<tr>
+								<td class="buttonSeite">
+									<input id="loadRightButtonLoad" type="button" value="Load"></input>
+								</td>
+								<td class="fieldSeite">
+									<input id="loadTextfield" type="textfield"></input>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<input id="loadRightButtonPlay" type="button" value="Play"></input>
+								</td>
+								<td>
+									<input id="loadRightButtonStop" type="button" value="Stop"></input>
+								</td>
+								<td>
+									<input id="loadRightButtonReset" type="button" value="Reset"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Volume:
+								</td>
+								<td>
+									<input id="volumeRight" type="range" min="0" max="100"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="volumeRightField" type="number"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Speed:
+								</td>
+								<td>
+									<input id="speedRight" type="range" min="0" max="200"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="speedRightField" type="number"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Playing:
+								</td>
+								<td>
+									<input id="timeRight" class="labelTime" type="label" value="HH:MM:SS" disabled></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									R
+								</td>
+								<td>
+									<input id="RRight" type="range" min="0" max="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="RRightField" type="number"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									G
+								</td>
+								<td>
+									<input id="GRight" type="range" min="0" max="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="GRightField" type="number"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									B
+								</td>
+								<td>
+									<input id="BRight" type="range" min="0" max="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="BRightField" type="number"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Filter 1:
+								</td>
+								<td>
+									<select>
+										<option value="NoFilt">-No Filter-</option>
+										<option value="Filt1">Filt1</option>
+										<option value="Filt2">Filt2</option>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Filter 2:
+								</td>
+								<td>
+									<select>
+										<option value="NoFilt">-No Filter-</option>
+										<option value="Filt1">Filt1</option>
+										<option value="Filt2">Filt2</option>
+									</select>
+								</td>
+							</tr>
+						</table>
+					</div>	
+				</td>
+			</tr>
+		</table>
+		<table class="Fader">
+			<tr>
+				<td class="buttonSeite volume">
+					Fade:
+				</td>
+				<td>
+					<input type="range" min="0" max="100"></input>
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>
