@@ -1,11 +1,12 @@
 body {
 	background-color: black;
 	color: white;
+	margin: 20px 0;
 }
 
 table {
-	margin-top: 5px;
-	margin-left: 10%;
+	margin-top: 5px !important;
+	margin: 0 auto;
 	width: 50%;
 	text-align: center;
 
@@ -59,8 +60,4 @@ canvas {
 	border: none;
 	background-color: #1C1C1C;
 	color: white;
-}
-
-.Fader {
-	margin-left: 20% !important;
 }
