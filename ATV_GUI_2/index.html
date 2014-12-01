@@ -171,10 +171,10 @@
 									Volume:
 								</td>
 								<td>
-									<input id="volumeRight" type="range" min="0" max="100"></input>
+									<input id="volumeRight" type="range" min="0" max="100" value="100"></input>
 								</td>
 								<td>
-									<input class="numberbox" id="volumeRightField" type="number"></input>
+									<input class="numberbox" id="volumeRightField" type="number" value="100"></input>
 								</td>
 							</tr>
 							<tr>
@@ -182,10 +182,10 @@
 									Speed:
 								</td>
 								<td>
-									<input id="speedRight" type="range" min="0" max="200"></input>
+									<input id="speedRight" type="range" min="0" max="200" value="100"></input>
 								</td>
 								<td>
-									<input class="numberbox" id="speedRightField" type="number"></input>
+									<input class="numberbox" id="speedRightField" type="number" value="100"></input>
 								</td>
 							</tr>
 							<tr>
@@ -206,10 +206,10 @@
 									R
 								</td>
 								<td>
-									<input id="RRight" type="range" min="0" max="255"></input>
+									<input id="RRight" type="range" min="0" max="255" value="255"></input>
 								</td>
 								<td>
-									<input class="numberbox" id="RRightField" type="number"></input>
+									<input class="numberbox" min="0" max="255" id="RRightField" type="number" value="255"></input>
 								</td>
 							</tr>
 							<tr>
@@ -217,10 +217,10 @@
 									G
 								</td>
 								<td>
-									<input id="GRight" type="range" min="0" max="255"></input>
+									<input id="GRight" type="range" min="0" max="255" value="255"></input>
 								</td>
 								<td>
-									<input class="numberbox" id="GRightField" type="number"></input>
+									<input class="numberbox" min="0" max="255" id="GRightField" type="number" value="255"></input>
 								</td>
 							</tr>
 							<tr>
@@ -228,10 +228,10 @@
 									B
 								</td>
 								<td>
-									<input id="BRight" type="range" min="0" max="255"></input>
+									<input id="BRight" type="range" min="0" max="255" value="255"></input>
 								</td>
 								<td>
-									<input class="numberbox" id="BRightField" type="number"></input>
+									<input class="numberbox" min="0" max="255" id="BRightField" type="number" value="255"></input>
 								</td>
 							</tr>
 							<tr>
@@ -271,46 +271,6 @@
 				</td>
 			</tr>
 		</table>	
-		<script>
-			function BarChange(var1, var2) {
-				document.getElementById(var1).value = document.getElementById(var2).value;
-			}
-			function ControlSite(site) {
-				document.getElementById('R' + site).addEventListener('change', function () {
-					BarChange('R'+ site + 'Field', 'R' + site);
-				}, false);
-				document.getElementById('R' + site + 'Field').addEventListener('change', function () {
-					BarChange('R' + site, 'R' + site + 'Field');
-				}, false);
-				document.getElementById('G'+ site +'Field').addEventListener('change', function () {
-					BarChange('G'  + site , 'G' + site + 'Field');
-				}, false);
-				document.getElementById('G' + site).addEventListener('change', function () {
-					BarChange('G' + site +'Field', 'G' + site);
-				}, false);
-				document.getElementById('B'+ site+'Field').addEventListener('change', function () {
-					BarChange('B'  + site, 'B' + site+'Field');
-				}, false);
-				document.getElementById('B'+ site).addEventListener('change', function () {
-					BarChange('B' + site+'Field', 'B' + site);
-				}, false);
-				document.getElementById('volume'+ site+'Field').addEventListener('change', function () {
-					BarChange('volume'  + site, 'volume' + site +'Field');
-				}, false);
-				document.getElementById('volume'+ site).addEventListener('change', function () {
-					BarChange('volume' + site +'Field', 'volume'  + site);
-				}, false);
-				document.getElementById('speed'+ site+'Field').addEventListener('change', function () {
-					BarChange('speed'  + site, 'speed' + site +'Field');
-				}, false);
-				document.getElementById('speed'+ site).addEventListener('change', function () {
-					BarChange('speed' + site+'Field', 'speed' + site);
-				}, false);
-			}
-			window.onload = function(){ 
-				ControlSite('Left');
-				ControlSite('Right');
-			}
-		</script>
+		<script language="javascript" type="text/javascript" src="js/barControl.js"></script>
 	</body>
 </html>
