@@ -1,267 +1,276 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>WebDjs_Version1-DarkGray</title>
+		<title> WebDJS - Version 3</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap-theme.min.css">
-		<link rel="stylesheet" type="text/css" href="css/style.css">
+		<link rel="stylesheet" type="text/css" href="style/style.css">
 	</head>
 	<body>
-		<!-- VIDEO -->
-		<section class="video_sec">
-			<div class="videoDiv">
+		<table>
+			<tr>
+				<td> 
+					<div class="panel panel-default setups">
+						<div class="panel-heading setupHead">
+							L <input id="leftCtrl" name="control" type="radio" checked></input>
+						</div>
+						<table class="layout">
+							<tr>
+								<td class="buttonSeite">
+									<input id="loadLeftButtonLoad" type="button" value="Load"></input>
+								</td>
+								<td class="fieldSeite">
+									<input id="loadTextfield" type="textfield"></input>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<input id="loadLeftButtonPlay" type="button" value="Play"></input>
+								</td>
+								<td>
+									<input id="loadLeftButtonStop" type="button" value="Stop"></input>
+								</td>
+								<td>
+									<input id="loadLeftButtonReset" type="button" value="Reset"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Volume:
+								</td>
+								<td>
+									<input id="volumeLeft" type="range" min="0" max="100" value="100"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="volumeLeftField" type="number" value="100"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Speed:
+								</td>
+								<td>
+									<input id="speedLeft" type="range" min="0" max="200" value="100"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="speedLeftField" type="number" value="100"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Playing:
+								</td>
+								<td>
+									<input id="timeLeft" class="labelTime" type="label" value="HH:MM:SS" disabled></input>
+								</td>
+							</tr>
+							<tr>
+								<td>
+								<br>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									R
+								</td>
+								<td>
+									<input id="RLeft" type="range" min="0" max="255" value="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" min="0" max="255" id="RLeftField" type="number" value="255"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									G
+								</td>
+								<td>
+									<input id="GLeft" type="range" min="0" max="255" value="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" min="0" max="255" id="GLeftField" type="number" value="255"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									B
+								</td>
+								<td>
+									<input id="BLeft" type="range" min="0" max="255" value="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" min="0" max="255" id="BLeftField" type="number" value="255"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Filter 1:
+								</td>
+								<td>
+									<select>
+										<option value="NoFilt">-No Filter-</option>
+										<option value="Filt1">Filt1</option>
+										<option value="Filt2">Filt2</option>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Filter 2:
+								</td>
+								<td>
+									<select>
+										<option value="NoFilt">-No Filter-</option>
+										<option value="Filt1">Filt1</option>
+										<option value="Filt2">Filt2</option>
+									</select>
+								</td>
+							</tr>
+						</table>
+					</div>	
+				</td>
 				
+				<!------------------------------------------------------>
 				
+				<td>
+					<canvas class="canvas" width="540" height="360">
+						-Hier Video-
+					</canvas>
+				</td>
 				
-       
-        <canvas id="canvas" width="540" height="360"></canvas>
-        <script src="js/webdjs/webdjs.js"></script>
-        <script>
-            var canvas = document.getElementById("canvas");
-            var gl = null;
-            var glContextTypes = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"];
-
-            for (var i = 0; i < glContextTypes.length && !gl; ++i) {
-                gl = canvas.getContext(glContextTypes[i]);
-            }
-            
-            var video = document.createElement("video");
-            var videoReady = false;
-            video.autoplay = true;
-            video.loop = true;
-            video.oncanplay = function() {
-                videoReady = true;
-            }
-            video.src = "assets/video.mp4";
-            video.play();
-            
-            gl.enable(gl.BLEND);
-            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-            
-            var texture1 = gl.createTexture();
-            gl.bindTexture(gl.TEXTURE_2D, texture1);        
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            
-            var renderer = new WebDJS.VJ.Simple();
-            var vinput = new WebDJS.VJ.GLVideoInput(video);
-            renderer.inlet(vinput);
-            renderer.bind(texture1);
-            
-            var colorControl = new WebDJS.VJ.ColorController(renderer);
-            colorControl.red(function(){return document.getElementById("R-bar").value/255;});
-            colorControl.green(function(){return document.getElementById("G-bar").value/255;});
-            colorControl.blue(function(){return document.getElementById("B-bar").value/255;});
-            colorControl.alpha(function(){return document.getElementById("Alpha-bar").value/255;});
-            
-            function renderLoop() {
-                gl.clear(gl.COLOR_BUFFER_BIT);
-                if (videoReady) {
-                    vinput.reload();
-                    renderer.apply(gl);
-                }
-                window.requestAnimationFrame(renderLoop);
-            }
-            
-            renderLoop();
-        </script>
+				<!------------------------------------------------------>
 				
-				
-			</div>
-		</section>
-		<section class="setupsSection">
-				<div class="setupDiv">
-					<table>
-						<tr>
-							<td>
-								<div class="panel panel-default setups">
-									<div class="panel-heading setupHead">Audio Controls</div>
-									<table class="table">
-										<tr>
-											<td>
-												-Volume-
-												<input type="range" min="0" max="100" id="vol" value="100">
-											</td>
-										</tr>
-										<tr>		
-											<td>
-												-Speed-
-													<input type="range" min="0" max= "200" id="audiospeed" value="100">
-											</td>
-										</tr>
-										<tr>		
-											<td>
-												<input class="btn btn-default" type="button" id="audioReset" value="Reset">
-											</td>
-										</tr>											
-									</table>
-								</div>
-							</td>
-							<td>
-								<!-- FILTER -->
-								<div class="panel panel-default setups">
-									<div class="panel-heading setupHead">Filter</div>
-												<table class="table">
-													<tr>
-														<td>
-															<input type="checkbox" id="sobel"> Sobel
-														</td>
-														<td>
-															<input type="number" min="0" class="filterinput" id="sobel-parameter" value="0">
-														</td>
-													</tr>
-													<tr>
-														<td>
-															<input type="checkbox" id="rgb"> Disco Mode
-														</td>
-														<td>
-														</td>
-													</tr>
-													<tr>
-														<td>
-															<b>R</b>
-															<input type="range" min="0" max="255" id="R-bar" value="255">
-														</td>
-														<td>
-															<input type="number" min="0" max="255" class="filterinput" id="R-parameter" value="255">
-														</td>
-													</tr>
-													<tr>
-														<td>
-															<b>G</b>
-															<input type="range" min="0" max="255" id="G-bar" value="255">
-														</td>
-														<td>
-															<input type="number" min="0"  max="255" class="filterinput" id="G-parameter" value="255">
-														</td>
-													</tr>
-													<tr>
-														<td>
-															<b>B</b>
-															<input type="range" min="0" max="255" id="B-bar" value="255">
-														</td>
-														<td>
-															<input type="number" min="0"  max="255" class="filterinput" id="B-parameter" value="255">
-														</td>
-													</tr>
-													<tr>
-														<td>
-															<b>Alpha</b>
-															<input type="range" min="0" max="255" id="Alpha-bar" value="255">
-														</td>
-														<td>
-															<input type="number" min="0"  max="255" class="filterinput" id="Alpha-parameter" value="255">
-														</td>
-													</tr>
-												</table>	
-								</div>
-							</td>
-							<td>
-								<!-- RENDERER -->
-								<div class="panel panel-default setups">
-									<div class="panel-heading setupHead">Renderer</div>
-										<table class="table">
-											<tr>
-												<td>
-													<input type="radio" name="renderradio" id="cube"> Cube					
-												</td>
-											</tr>
-											<tr>
-												<td>
-													<input type="radio" name="renderradio" id="circle"> Sphere
-												</td>
-											</tr>
-											<tr>
-												<td>
-													<input type="radio" name="renderradio" id="off" checked> Off
-												</td>
-											</tr>
-									</table>
-								</div>
-							</td>
-						</tr>
-					</table>
-				</div>
-			</section>		
-		<!-- <script src="js/"></script> -->
-		<script>
-		
-			document.getElementById("rgb").addEventListener("change", function randomColor() {
-				
-				if (document.getElementById("rgb").checked == true) {
-					var r = Math.floor((Math.random() * 255));
-					var g = Math.floor((Math.random() * 255));
-					var b = Math.floor((Math.random() * 255));
-				
-					document.getElementById("R-bar").value = r;
-					document.getElementById("R-parameter").value = r;
-					document.getElementById("G-bar").value = g;
-					document.getElementById("G-parameter").value = g;
-					document.getElementById("B-bar").value = b;
-					document.getElementById("B-parameter").value = b;
-				
-					colorControl.send();
-					//changeBGColor();
-					setTimeout(randomColor, 200);
-				}
-				
-			}, false);
-		
-			function sendColorBarToPara(bar, parameter) {
-				document.getElementById(parameter).value = document.getElementById(bar).value;
-				colorControl.send();
-			}
-			
-			function sendColorParaToBar(bar, parameter) {
-				document.getElementById(bar).value = document.getElementById(parameter).value;
-				colorControl.send();
-			}		
-			
-			/*function changeBGColor() {
-				document.body.style.backgroundColor = 'rgb(' + (255 - document.getElementById("R-bar").value) + ',' + (255 - document.getElementById("G-bar").value) + ',' + (255 - document.getElementById("B-bar").value) +  ')';
-			}*/
-		
-			document.getElementById("R-bar").addEventListener("change", function() {
-				sendColorBarToPara("R-bar", "R-parameter");
-				//changeBGColor();
-			}, false);
-			document.getElementById("R-parameter").addEventListener("change", function() {
-				sendColorParaToBar("R-bar", "R-parameter");
-				//changeBGColor();
-			}, false);
-			document.getElementById("G-bar").addEventListener("change", function() {
-				sendColorBarToPara("G-bar", "G-parameter");
-				//changeBGColor();
-			}, false);
-			document.getElementById("G-parameter").addEventListener("change", function() {
-				sendColorParaToBar("G-bar", "G-parameter");
-				//changeBGColor();
-			}, false);
-			document.getElementById("B-bar").addEventListener("change", function() {
-				sendColorBarToPara("B-bar", "B-parameter");
-				//changeBGColor();
-			}, false);
-			document.getElementById("B-parameter").addEventListener("change", function() {
-				sendColorParaToBar("B-bar", "B-parameter");
-				//changeBGColor();
-			}, false);
-			document.getElementById("Alpha-bar").addEventListener("change", function() {
-				sendColorBarToPara("Alpha-bar", "Alpha-parameter");
-			}, false);
-			document.getElementById("Alpha-parameter").addEventListener("change", function() {
-				sendColorParaToBar("Alpha-bar", "Alpha-parameter");
-			}, false);
-			
-			document.getElementById("vol").addEventListener("change", function() {
-				video.volume = document.getElementById("vol").value/100;
-			}, false);
-			
-			document.getElementById("audiospeed").addEventListener("change", function() {
-				video.playbackRate = document.getElementById("audiospeed").value/100;
-			}, false);
-		</script>
+				<td>
+					<div class="panel panel-default setups">
+						<div class="panel-heading setupHead">
+							R <input id="rightCtrl" name="control" type="radio"></input>
+						</div>
+						<table class="layout">
+							<tr>
+								<td class="buttonSeite">
+									<input id="loadRightButtonLoad" type="button" value="Load"></input>
+								</td>
+								<td class="fieldSeite">
+									<input id="loadTextfield" type="textfield"></input>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<input id="loadRightButtonPlay" type="button" value="Play"></input>
+								</td>
+								<td>
+									<input id="loadRightButtonStop" type="button" value="Stop"></input>
+								</td>
+								<td>
+									<input id="loadRightButtonReset" type="button" value="Reset"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Volume:
+								</td>
+								<td>
+									<input id="volumeRight" type="range" min="0" max="100" value="100"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="volumeRightField" type="number" value="100"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Speed:
+								</td>
+								<td>
+									<input id="speedRight" type="range" min="0" max="200" value="100"></input>
+								</td>
+								<td>
+									<input class="numberbox" id="speedRightField" type="number" value="100"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Playing:
+								</td>
+								<td>
+									<input id="timeRight" class="labelTime" type="label" value="HH:MM:SS" disabled></input>
+								</td>
+							</tr>
+								<tr>
+								<td>
+								<br>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									R
+								</td>
+								<td>
+									<input id="RRight" type="range" min="0" max="255" value="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" min="0" max="255" id="RRightField" type="number" value="255"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									G
+								</td>
+								<td>
+									<input id="GRight" type="range" min="0" max="255" value="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" min="0" max="255" id="GRightField" type="number" value="255"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									B
+								</td>
+								<td>
+									<input id="BRight" type="range" min="0" max="255" value="255"></input>
+								</td>
+								<td>
+									<input class="numberbox" min="0" max="255" id="BRightField" type="number" value="255"></input>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Filter 1:
+								</td>
+								<td>
+									<select>
+										<option value="NoFilt">-No Filter-</option>
+										<option value="Filt1">Filt1</option>
+										<option value="Filt2">Filt2</option>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<td class="buttonSeite volume">
+									Filter 2:
+								</td>
+								<td>
+									<select>
+										<option value="NoFilt">-No Filter-</option>
+										<option value="Filt1">Filt1</option>
+										<option value="Filt2">Filt2</option>
+									</select>
+								</td>
+							</tr>
+						</table>
+					</div>	
+				</td>
+			</tr>
+			<tr>
+				<td class="buttonSeite volume">
+					Fade:
+				</td>
+				<td>
+					<input type="range" min="0" max="100"></input>
+				</td>
+			</tr>
+		</table>	
+		<script language="javascript" type="text/javascript" src="js/barControl.js"></script>
 	</body>
 </html>
