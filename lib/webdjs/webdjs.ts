@@ -633,6 +633,41 @@ module WebDJS {
                 this.target.colorize(this.rGen(), this.gGen(), this.bGen(), this.aGen());
             }
         }
+
+        export interface UI {
+	        midiActive : HTMLInputElement;
+	        video : HTMLVideoElement;
+	        volume : HTMLInputElement;
+	        volumeSpinner : HTMLInputElement;
+	        speed : HTMLInputElement;
+	        speedSpinner : HTMLInputElement;
+	        red : HTMLInputElement;
+	        redSpinner : HTMLInputElement;
+	        green : HTMLInputElement;
+	        greenSpinner : HTMLInputElement;
+	        blue : HTMLInputElement;
+	        blueSpinner : HTMLInputElement;
+	        playingTime : HTMLInputElement;
+	        fader : HTMLInputElement;
+	        filterOne : HTMLSelectElement;
+	        filterTwo : HTMLSelectElement;
+	        loadButton : HTMLButtonElement;
+	        playButton : HTMLButtonElement;
+	        stopButton : HTMLButtonElement;
+	        resetButton : HTMLButtonElement;
+	        labelFile : HTMLInputElement;
+        }
+
+        export class Controller {
+		    private uiL : UI;
+		    private uiR : UI;
+		    constructor(uiL : UI, uiR : UI) {
+		        this.uiL = uiL;
+		        this.uiR = uiR;
+		    }
+		     
+        }
+        
     }
 }
 

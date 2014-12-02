@@ -21,7 +21,7 @@
 									<input id="loadLeftButtonLoad" type="button" value="Load"></input>
 								</td>
 								<td class="fieldSeite">
-									<input id="loadTextfield" type="textfield"></input>
+									<input id="loadTextfield" type="label"></input>
 								</td>
 							</tr>
 							<tr>
@@ -134,8 +134,9 @@
 				<!------------------------------------------------------>
 				
 				<td>
-					<canvas class="canvas" width="540" height="360">
-						-Hier Video-
+					<canvas id="canvas" class="canvas" width="540" height="360">
+						<script src="js/webdjs/webdjs.js"></script>
+        		<script language="javascript" type="text/javascript" src="js/webdjs/init.js">   </script>
 					</canvas>
 				</td>
 				
@@ -152,7 +153,7 @@
 									<input id="loadRightButtonLoad" type="button" value="Load"></input>
 								</td>
 								<td class="fieldSeite">
-									<input id="loadTextfield" type="textfield"></input>
+									<input id="loadTextfield" type="label"></input>
 								</td>
 							</tr>
 							<tr>
@@ -193,7 +194,7 @@
 									Playing:
 								</td>
 								<td>
-									<input id="timeRight" class="labelTime" type="label" value="HH:MM:SS" disabled></input>
+									<input id="timeRight" type="label" value="HH:MM:SS" disabled></input>
 								</td>
 							</tr>
 								<tr>
