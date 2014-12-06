@@ -634,7 +634,7 @@ module WebDJS {
             }
         }
 
-        export interface UI {
+        export interface ChannelUI {
 	        midiActive : HTMLInputElement;
 	        video : HTMLVideoElement;
 	        volume : HTMLInputElement;
@@ -648,24 +648,39 @@ module WebDJS {
 	        blue : HTMLInputElement;
 	        blueSpinner : HTMLInputElement;
 	        playingTime : HTMLInputElement;
-	        fader : HTMLInputElement;
 	        filterOne : HTMLSelectElement;
 	        filterTwo : HTMLSelectElement;
-	        loadButton : HTMLButtonElement;
+	        fileInput : HTMLInputElement;
 	        playButton : HTMLButtonElement;
 	        stopButton : HTMLButtonElement;
 	        resetButton : HTMLButtonElement;
-	        labelFile : HTMLInputElement;
+        }
+        
+        export interface UI {
+            left : ChannelUI;
+            right : ChannelUI;
+            fader : HTMLInputElement;
         }
 
         export class Controller {
-		    private uiL : UI;
-		    private uiR : UI;
-		    constructor(uiL : UI, uiR : UI) {
-		        this.uiL = uiL;
-		        this.uiR = uiR;
+		    private ui : UI;
+		    private leftReady : boolean;
+		    private rightReady : boolean;
+		    constructor(ui : UI) {
+		        this.ui = ui;
 		    }
-		     
+		    register() : void {
+		        this.leftReady = false;
+		        this.ui.left.video.oncanplay = function(){this.leftReady = true;};
+		        this.ui.left.volume.addEventListener("change", function() {
+		            this.ui.left.video.volume = this.ui.left.volume.value / 100;
+		            this.ui.left.volumeSpinner.value = this.ui.left.volume.value;
+		        });
+		        this.ui.left.volumeSpinner.addEventListener("change", function() {
+		            this.ui.left.video.volume = this.ui.left.volumeSpinner.value / 100;
+		            this.ui.left.volume.value = this.ui.left.volumeSpinner.value;
+		        });
+		    }
         }
         
     }

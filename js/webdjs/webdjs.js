@@ -439,5 +439,12 @@ var WebDJS;
             return Colorizer;
         })();
         VJ.Colorizer = Colorizer;
+        var Controller = (function () {
+            function Controller(ui) {
+                this.ui = ui;
+            }
+            return Controller;
+        })();
+        VJ.Controller = Controller;
     })(VJ = WebDJS.VJ || (WebDJS.VJ = {}));
 })(WebDJS || (WebDJS = {}));
