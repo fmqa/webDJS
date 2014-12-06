@@ -671,18 +671,25 @@ module WebDJS {
 		    }
 		    register() : void {
 		        this.leftReady = false;
-		        this.ui.left.video.oncanplay = function(){this.leftReady = true;};
-		        this.ui.left.volume.addEventListener("change", function() {
-		            this.ui.left.video.volume = this.ui.left.volume.value / 100;
+		        this.ui.left.video.oncanplay = () => {this.leftReady = true;};
+		        this.ui.left.volume.addEventListener("change", () => {
+		            this.ui.left.video.volume = +this.ui.left.volume.value / 100;
 		            this.ui.left.volumeSpinner.value = this.ui.left.volume.value;
 		        });
-		        this.ui.left.volumeSpinner.addEventListener("change", function() {
-		            this.ui.left.video.volume = this.ui.left.volumeSpinner.value / 100;
+		        this.ui.left.volumeSpinner.addEventListener("change", () => {
+		            this.ui.left.video.volume = +this.ui.left.volumeSpinner.value / 100;
 		            this.ui.left.volume.value = this.ui.left.volumeSpinner.value;
+		        });
+		        this.ui.left.speed.addEventListener("change", () => {
+		            this.ui.left.video.playbackRate = +this.ui.left.speed.value / 200;
+		            this.ui.left.speedSpinner.value = this.ui.left.speed.value;
+		        });
+		        this.ui.left.speed.addEventListener("change", () => {
+		            this.ui.left.video.playbackRate = +this.ui.left.speedSpinner.value / 200;
+		            this.ui.left.speed.value = this.ui.left.speedSpinner.value; 
 		        });
 		    }
         }
-        
     }
 }
 
