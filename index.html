@@ -263,7 +263,12 @@
 			</tr>
 		</table>
 		<script src="js/webdjs/webdjs.js"></script>
-    <script language="javascript" type="text/javascript" src="js/webdjs/init.js">   </script>
-		<script language="javascript" type="text/javascript" src="js/barControl.js"></script>
+        <script src="js/webdjs/wiring.js"></script>
+        <script>
+            (function() {
+                var controller = new WebDJS.VJ.Controller(WebDJS.Wiring.wireVJ(document));
+                controller.register();
+            })();
+        </script>
 	</body>
 </html>
