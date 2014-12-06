@@ -443,6 +443,29 @@ var WebDJS;
             function Controller(ui) {
                 this.ui = ui;
             }
+            Controller.prototype.register = function () {
+                var _this = this;
+                this.leftReady = false;
+                this.ui.left.video.oncanplay = function () {
+                    _this.leftReady = true;
+                };
+                this.ui.left.volume.addEventListener("change", function () {
+                    _this.ui.left.video.volume = +_this.ui.left.volume.value / 100;
+                    _this.ui.left.volumeSpinner.value = _this.ui.left.volume.value;
+                });
+                this.ui.left.volumeSpinner.addEventListener("change", function () {
+                    _this.ui.left.video.volume = +_this.ui.left.volumeSpinner.value / 100;
+                    _this.ui.left.volume.value = _this.ui.left.volumeSpinner.value;
+                });
+                this.ui.left.speed.addEventListener("change", function () {
+                    _this.ui.left.video.playbackRate = +_this.ui.left.speed.value / 200;
+                    _this.ui.left.speedSpinner.value = _this.ui.left.speed.value;
+                });
+                this.ui.left.speed.addEventListener("change", function () {
+                    _this.ui.left.video.playbackRate = +_this.ui.left.speedSpinner.value / 200;
+                    _this.ui.left.speed.value = _this.ui.left.speedSpinner.value;
+                });
+            };
             return Controller;
         })();
         VJ.Controller = Controller;
