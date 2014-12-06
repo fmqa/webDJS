@@ -661,13 +661,18 @@ module WebDJS {
             right : ChannelUI;
             fader : HTMLInputElement;
         }
+        
+        export class Pipeline {
+        }
 
         export class Controller {
 		    private ui : UI;
+		    private pipe : Pipeline;
 		    private leftReady : boolean;
 		    private rightReady : boolean;
-		    constructor(ui : UI) {
+		    constructor(ui : UI, pipe : Pipeline) {
 		        this.ui = ui;
+		        this.pipe = pipe;
 		    }
 		    register() : void {
 		        this.leftReady = false;

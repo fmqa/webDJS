@@ -439,9 +439,16 @@ var WebDJS;
             return Colorizer;
         })();
         VJ.Colorizer = Colorizer;
+        var Pipeline = (function () {
+            function Pipeline() {
+            }
+            return Pipeline;
+        })();
+        VJ.Pipeline = Pipeline;
         var Controller = (function () {
-            function Controller(ui) {
+            function Controller(ui, pipe) {
                 this.ui = ui;
+                this.pipe = pipe;
             }
             Controller.prototype.register = function () {
                 var _this = this;
