@@ -103,7 +103,7 @@ video2.play();
 var video2vinput = new WebDJS.VJ.VideoSupplier(video2, texture5);
 
 var mixer = new WebDJS.VJ.Mixer();
-//mixer.fade(0.5);
+mixer.fade(0.5);
 //mixer.fade(1.0);
 video2vinput.register(mixer.left());
 fbinput3.register(mixer.right());
