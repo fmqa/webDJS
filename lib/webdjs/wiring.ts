@@ -1,12 +1,12 @@
 /// <reference path="webdjs.ts" />
 
 module WebDJS {
-    module Wiring {
+    export module Wiring {
         export function wireVJ(doc : Document) : VJ.UI {
             return {
                 left: {
                     midiActive: <HTMLInputElement>doc.getElementById("leftCtrl"),
-                    video: <HTMLVideoElement>doc.getElementById("leftVideo"),
+                    video: <HTMLVideoElement>doc.getElementById("leftVideo") || doc.createElement("video"),
                     volume: <HTMLInputElement>doc.getElementById("volumeLeft"),
                     volumeSpinner: <HTMLInputElement>doc.getElementById("volumeLeftField"),
                     speed: <HTMLInputElement>doc.getElementById("speedLeft"),
@@ -27,7 +27,7 @@ module WebDJS {
                 },
                 right: {
                     midiActive: <HTMLInputElement>doc.getElementById("rightCtrl"),
-                    video: <HTMLVideoElement>doc.getElementById("rightVideo"),
+                    video: <HTMLVideoElement>doc.getElementById("rightVideo") || doc.createElement("video"),
                     volume: <HTMLInputElement>doc.getElementById("volumeRight"),
                     volumeSpinner: <HTMLInputElement>doc.getElementById("volumeRightField"),
                     speed: <HTMLInputElement>doc.getElementById("speedRight"),
