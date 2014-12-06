@@ -24,18 +24,4 @@ function ControlSite(site) {
 	document.getElementById('volume'+ site+'Field').addEventListener('change', function () {
 		BarChange('volume'  + site, 'volume' + site +'Field');
 	}, false);
-	document.getElementById('volume'+ site).addEventListener('change', function () {
-		BarChange('volume' + site +'Field', 'volume'  + site);
-	}, false);
-	document.getElementById('speed'+ site+'Field').addEventListener('change', function () {
-		BarChange('speed'  + site, 'speed' + site +'Field');
-	}, false);
-	document.getElementById('speed'+ site).addEventListener('change', function () {
-		BarChange('speed' + site+'Field', 'speed' + site);
-	}, false);
-}
-
-window.onload = function(){ 
-	ControlSite('Left');
-	ControlSite('Right');
-}
+	document.getElementById('volume'+ site).addEventListener('change

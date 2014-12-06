@@ -23,13 +23,13 @@
 							</tr>
 							<tr>
 								<td>
-									<input id="loadLeftButtonPlay" type="button" value="Play">
+									<input id="LeftButtonPlay" type="button" value="Play">
 								</td>
 								<td>
-									<input id="loadLeftButtonStop" type="button" value="Stop">
+									<input id="LeftButtonStop" type="button" value="Stop">
 								</td>
 								<td>
-									<input id="loadLeftButtonReset" type="button" value="Reset">
+									<input id="LeftButtonReset" type="button" value="Reset">
 								</td>
 							</tr>
 							<tr>
@@ -148,13 +148,13 @@
 							</tr>
 							<tr>
 								<td>
-									<input id="loadRightButtonPlay" type="button" value="Play">
+									<input id="RightButtonPlay" type="button" value="Play">
 								</td>
 								<td>
-									<input id="loadRightButtonStop" type="button" value="Stop">
+									<input id="RightButtonStop" type="button" value="Stop">
 								</td>
 								<td>
-									<input id="loadRightButtonReset" type="button" value="Reset">
+									<input id="RightButtonReset" type="button" value="Reset">
 								</td>
 							</tr>
 							<tr>
@@ -230,7 +230,7 @@
 									Filter 1:
 								</td>
 								<td>
-									<select>
+									<select id="filter1">
 										<option value="NoFilt">-No Filter-</option>
 										<option value="Filt1">Filt1</option>
 										<option value="Filt2">Filt2</option>
@@ -242,7 +242,7 @@
 									Filter 2:
 								</td>
 								<td>
-									<select>
+									<select id="filter2"> 
 										<option value="NoFilt">-No Filter-</option>
 										<option value="Filt1">Filt1</option>
 										<option value="Filt2">Filt2</option>
@@ -258,10 +258,10 @@
 					Fade:
 				</td>
 				<td>
-					<input type="range" min="0" max="100">
+					<input id="fadeRange" type="range" min="0" max="100">
 				</td>
 			</tr>
-		</table>	
+		</table>
 		<script src="js/webdjs/webdjs.js"></script>
     <script language="javascript" type="text/javascript" src="js/webdjs/init.js">   </script>
 		<script language="javascript" type="text/javascript" src="js/barControl.js"></script>
