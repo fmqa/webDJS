@@ -447,31 +447,58 @@ var WebDJS;
         VJ.Pipeline = Pipeline;
         var Controller = (function () {
             function Controller(ui, pipe) {
+                this.canPlay = false;
+                this.onLeftCanPlay = null;
+                this.onLeftVolumeDrag = null;
+                this.onLeftVolumeSpin = null;
+                this.onLeftSpeedDrag = null;
+                this.onLeftSpeedSpin = null;
                 this.ui = ui;
                 this.pipe = pipe;
             }
             Controller.prototype.register = function () {
                 var _this = this;
-                this.leftReady = false;
-                this.ui.left.video.oncanplay = function () {
-                    _this.leftReady = true;
-                };
-                this.ui.left.volume.addEventListener("change", function () {
+                this.ui.left.video.oncanplay = (this.onLeftCanPlay = function () {
+                    _this.canPlay = true;
+                });
+                this.ui.left.volume.addEventListener("change", (this.onLeftVolumeDrag = function () {
                     _this.ui.left.video.volume = +_this.ui.left.volume.value / 100;
                     _this.ui.left.volumeSpinner.value = _this.ui.left.volume.value;
-                });
-                this.ui.left.volumeSpinner.addEventListener("change", function () {
+                }));
+                this.ui.left.volumeSpinner.addEventListener("change", (this.onLeftVolumeSpin = function () {
                     _this.ui.left.video.volume = +_this.ui.left.volumeSpinner.value / 100;
                     _this.ui.left.volume.value = _this.ui.left.volumeSpinner.value;
-                });
-                this.ui.left.speed.addEventListener("change", function () {
+                }));
+                this.ui.left.speed.addEventListener("change", (this.onLeftSpeedDrag = function () {
                     _this.ui.left.video.playbackRate = +_this.ui.left.speed.value / 200;
                     _this.ui.left.speedSpinner.value = _this.ui.left.speed.value;
-                });
-                this.ui.left.speed.addEventListener("change", function () {
+                }));
+                this.ui.left.speedSpinner.addEventListener("change", (this.onLeftSpeedSpin = function () {
                     _this.ui.left.video.playbackRate = +_this.ui.left.speedSpinner.value / 200;
                     _this.ui.left.speed.value = _this.ui.left.speedSpinner.value;
-                });
+                }));
+            };
+            Controller.prototype.unregister = function () {
+                if (this.ui.left.video.oncanplay === this.onLeftCanPlay) {
+                    this.ui.left.video.oncanplay = null;
+                    this.onLeftCanPlay = null;
+                }
+                if (this.onLeftVolumeDrag) {
+                    this.ui.left.volume.removeEventListener("change", this.onLeftVolumeDrag);
+                    this.onLeftVolumeDrag = null;
+                }
+                if (this.onLeftVolumeSpin) {
+                    this.ui.left.volumeSpinner.removeEventListener("change", this.onLeftVolumeSpin);
+                    this.onLeftVolumeSpin = null;
+                }
+                if (this.onLeftSpeedDrag) {
+                    this.ui.left.speed.removeEventListener("change", this.onLeftSpeedDrag);
+                    this.onLeftSpeedDrag = null;
+                }
+                if (this.onLeftSpeedSpin) {
+                    this.ui.left.speedSpinner.removeEventListener("change", this.onLeftSpeedSpin);
+                    this.onLeftSpeedSpin = null;
+                }
             };
             return Controller;
         })();

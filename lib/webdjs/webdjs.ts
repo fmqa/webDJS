@@ -668,31 +668,69 @@ module WebDJS {
         export class Controller {
 		    private ui : UI;
 		    private pipe : Pipeline;
-		    private leftReady : boolean;
-		    private rightReady : boolean;
+		    private canPlay : boolean = false;
+		    private onLeftCanPlay : () => void = null;
+		    private onLeftVolumeDrag : () => void = null;
+		    private onLeftVolumeSpin : () => void = null;
+		    private onLeftSpeedDrag : () => void = null;
+		    private onLeftSpeedSpin : () => void = null;
+		    private onLeftRedDrag : () => void = null;
+		    private onLeftRedSpin : () => void = null;
 		    constructor(ui : UI, pipe : Pipeline) {
 		        this.ui = ui;
 		        this.pipe = pipe;
 		    }
+		    speedUpLeft(factor : number) : void {
+		        this.ui.left.video.playbackRate = factor;
+		    }
+		    volumeLeftTo(percentage : number) : void {
+		        this.ui.left.video.volume = percentage;
+		    }
 		    register() : void {
-		        this.leftReady = false;
-		        this.ui.left.video.oncanplay = () => {this.leftReady = true;};
-		        this.ui.left.volume.addEventListener("change", () => {
-		            this.ui.left.video.volume = +this.ui.left.volume.value / 100;
+		        this.ui.left.video.oncanplay = (this.onLeftCanPlay = () => {
+		            this.canPlay = true;
+                });
+		        this.ui.left.volume.addEventListener("change", (this.onLeftVolumeDrag = () => {
+		            this.volumeLeftTo(+this.ui.left.volume.value / 100);
 		            this.ui.left.volumeSpinner.value = this.ui.left.volume.value;
-		        });
-		        this.ui.left.volumeSpinner.addEventListener("change", () => {
-		            this.ui.left.video.volume = +this.ui.left.volumeSpinner.value / 100;
+		        }));
+		        this.ui.left.volumeSpinner.addEventListener("change", (this.onLeftVolumeSpin = () => {
+		            this.volumeLeftTo(+this.ui.left.volumeSpinner.value / 100);
 		            this.ui.left.volume.value = this.ui.left.volumeSpinner.value;
-		        });
-		        this.ui.left.speed.addEventListener("change", () => {
-		            this.ui.left.video.playbackRate = +this.ui.left.speed.value / 200;
+		        }));
+		        this.ui.left.speed.addEventListener("change", (this.onLeftSpeedDrag = () => {
+		            this.speedUpLeft(+this.ui.left.speed.value / 200);
 		            this.ui.left.speedSpinner.value = this.ui.left.speed.value;
-		        });
-		        this.ui.left.speed.addEventListener("change", () => {
-		            this.ui.left.video.playbackRate = +this.ui.left.speedSpinner.value / 200;
+		        }));
+		        this.ui.left.speedSpinner.addEventListener("change", (this.onLeftSpeedSpin = () => {
+		            this.speedUpLeft(+this.ui.left.speedSpinner.value / 200);
 		            this.ui.left.speed.value = this.ui.left.speedSpinner.value; 
-		        });
+		        }));
+		        this.ui.left.red.addEventListener("change", (this.onLeftRedSpin = () => {
+		            this.ui.left.
+		        }));
+		    }
+		    unregister() : void {
+		        if (this.ui.left.video.oncanplay === this.onLeftCanPlay) {
+    		        this.ui.left.video.oncanplay = null;
+    		        this.onLeftCanPlay = null;
+                }
+                if (this.onLeftVolumeDrag) {
+    		        this.ui.left.volume.removeEventListener("change", this.onLeftVolumeDrag);
+    		        this.onLeftVolumeDrag = null;
+                }
+                if (this.onLeftVolumeSpin) {                
+    		        this.ui.left.volumeSpinner.removeEventListener("change", this.onLeftVolumeSpin);
+    		        this.onLeftVolumeSpin = null;
+                }
+                if (this.onLeftSpeedDrag) {
+    		        this.ui.left.speed.removeEventListener("change", this.onLeftSpeedDrag);
+    		        this.onLeftSpeedDrag = null;
+                }
+                if (this.onLeftSpeedSpin) {
+    		        this.ui.left.speedSpinner.removeEventListener("change", this.onLeftSpeedSpin);
+    		        this.onLeftSpeedSpin = null;
+                }
 		    }
         }
     }
