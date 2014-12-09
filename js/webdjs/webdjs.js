@@ -447,35 +447,165 @@ var WebDJS;
         VJ.Pipeline = Pipeline;
         var Controller = (function () {
             function Controller(ui, pipe) {
-                this.canPlay = false;
+                this.canPlayLeft = false;
+                this.canPlayRight = false;
+                this.onLeftPlayClick = null;
+                this.onLeftFileSelect = null;
                 this.onLeftCanPlay = null;
                 this.onLeftVolumeDrag = null;
                 this.onLeftVolumeSpin = null;
                 this.onLeftSpeedDrag = null;
                 this.onLeftSpeedSpin = null;
+                this.onLeftRedDrag = null;
+                this.onLeftRedSpin = null;
+                this.onLeftGreenDrag = null;
+                this.onLeftGreenSpin = null;
+                this.onLeftBlueDrag = null;
+                this.onLeftBlueSpin = null;
+                this.onRightCanPlay = null;
+                this.onRightVolumeDrag = null;
+                this.onRightVolumeSpin = null;
+                this.onRightSpeedDrag = null;
+                this.onRightSpeedSpin = null;
+                this.onRightRedDrag = null;
+                this.onRightRedSpin = null;
+                this.onRightGreenDrag = null;
+                this.onRightGreenSpin = null;
+                this.onRightBlueDrag = null;
+                this.onRightBlueSpin = null;
                 this.ui = ui;
                 this.pipe = pipe;
             }
+            Controller.prototype.speedUpLeft = function (factor) {
+                this.ui.left.video.playbackRate = factor;
+            };
+            Controller.prototype.volumeLeftTo = function (percentage) {
+                this.ui.left.video.volume = percentage;
+            };
+            Controller.prototype.leftRednessTo = function (percentage) {
+                // Change renderer
+            };
+            Controller.prototype.leftGreennessTo = function (percentage) {
+                // Change renderer
+            };
+            Controller.prototype.leftBluenessTo = function (percentage) {
+                // Change renderer
+            };
+            Controller.prototype.speedUpRight = function (factor) {
+                this.ui.right.video.playbackRate = factor;
+            };
+            Controller.prototype.volumeRightTo = function (percentage) {
+                this.ui.right.video.volume = percentage;
+            };
+            Controller.prototype.rightRednessTo = function (percentage) {
+                // Change renderer
+            };
+            Controller.prototype.rightGreennessTo = function (percentage) {
+                // Change renderer
+            };
+            Controller.prototype.rightBluenessTo = function (percentage) {
+                // Change renderer
+            };
             Controller.prototype.register = function () {
                 var _this = this;
+                this.ui.left.playButton.addEventListener("click", (this.onLeftPlayClick = function () {
+                    if (_this.ui.left.video.paused) {
+                        _this.ui.left.video.play();
+                        _this.ui.left.playButton.value = "Pause";
+                    }
+                    else {
+                        _this.ui.left.video.pause();
+                        _this.ui.left.playButton.value = "Play";
+                    }
+                }));
+                this.ui.left.fileInput.addEventListener("change", (this.onLeftFileSelect = function (evt) {
+                    _this.ui.left.video.src = URL.createObjectURL(evt.target.files[0]);
+                }));
                 this.ui.left.video.oncanplay = (this.onLeftCanPlay = function () {
-                    _this.canPlay = true;
+                    _this.canPlayLeft = true;
                 });
                 this.ui.left.volume.addEventListener("change", (this.onLeftVolumeDrag = function () {
-                    _this.ui.left.video.volume = +_this.ui.left.volume.value / 100;
+                    _this.volumeLeftTo(+_this.ui.left.volume.value / 100);
                     _this.ui.left.volumeSpinner.value = _this.ui.left.volume.value;
                 }));
                 this.ui.left.volumeSpinner.addEventListener("change", (this.onLeftVolumeSpin = function () {
-                    _this.ui.left.video.volume = +_this.ui.left.volumeSpinner.value / 100;
+                    _this.volumeLeftTo(+_this.ui.left.volumeSpinner.value / 100);
                     _this.ui.left.volume.value = _this.ui.left.volumeSpinner.value;
                 }));
                 this.ui.left.speed.addEventListener("change", (this.onLeftSpeedDrag = function () {
-                    _this.ui.left.video.playbackRate = +_this.ui.left.speed.value / 200;
+                    _this.speedUpLeft(+_this.ui.left.speed.value / 200);
                     _this.ui.left.speedSpinner.value = _this.ui.left.speed.value;
                 }));
                 this.ui.left.speedSpinner.addEventListener("change", (this.onLeftSpeedSpin = function () {
-                    _this.ui.left.video.playbackRate = +_this.ui.left.speedSpinner.value / 200;
+                    _this.speedUpLeft(+_this.ui.left.speedSpinner.value / 200);
                     _this.ui.left.speed.value = _this.ui.left.speedSpinner.value;
+                }));
+                this.ui.left.red.addEventListener("change", (this.onLeftRedDrag = function () {
+                    _this.leftRednessTo(+_this.ui.left.red.value / 255);
+                    _this.ui.left.redSpinner.value = _this.ui.left.red.value;
+                }));
+                this.ui.left.redSpinner.addEventListener("change", (this.onLeftRedSpin = function () {
+                    _this.leftRednessTo(+_this.ui.left.red.value / 255);
+                    _this.ui.left.red.value = _this.ui.left.redSpinner.value;
+                }));
+                this.ui.left.green.addEventListener("change", (this.onLeftGreenDrag = function () {
+                    _this.leftGreennessTo(+_this.ui.left.green.value / 255);
+                    _this.ui.left.greenSpinner.value = _this.ui.left.green.value;
+                }));
+                this.ui.left.greenSpinner.addEventListener("change", (this.onLeftGreenSpin = function () {
+                    _this.leftGreennessTo(+_this.ui.left.green.value / 255);
+                    _this.ui.left.green.value = _this.ui.left.greenSpinner.value;
+                }));
+                this.ui.left.blue.addEventListener("change", (this.onLeftBlueDrag = function () {
+                    _this.leftBluenessTo(+_this.ui.left.green.value / 255);
+                    _this.ui.left.blueSpinner.value = _this.ui.left.blue.value;
+                }));
+                this.ui.left.greenSpinner.addEventListener("change", (this.onLeftBlueSpin = function () {
+                    _this.leftBluenessTo(+_this.ui.left.blue.value / 255);
+                    _this.ui.left.blue.value = _this.ui.left.blueSpinner.value;
+                }));
+                this.ui.right.video.oncanplay = (this.onRightCanPlay = function () {
+                    _this.canPlayRight = true;
+                });
+                this.ui.right.volume.addEventListener("change", (this.onRightVolumeDrag = function () {
+                    _this.volumeRightTo(+_this.ui.right.volume.value / 100);
+                    _this.ui.right.volumeSpinner.value = _this.ui.right.volume.value;
+                }));
+                this.ui.right.volumeSpinner.addEventListener("change", (this.onRightVolumeSpin = function () {
+                    _this.volumeRightTo(+_this.ui.right.volumeSpinner.value / 100);
+                    _this.ui.right.volume.value = _this.ui.right.volumeSpinner.value;
+                }));
+                this.ui.right.speed.addEventListener("change", (this.onRightSpeedDrag = function () {
+                    _this.speedUpRight(+_this.ui.right.speed.value / 200);
+                    _this.ui.right.speedSpinner.value = _this.ui.right.speed.value;
+                }));
+                this.ui.right.speedSpinner.addEventListener("change", (this.onRightSpeedSpin = function () {
+                    _this.speedUpRight(+_this.ui.right.speedSpinner.value / 200);
+                    _this.ui.right.speed.value = _this.ui.right.speedSpinner.value;
+                }));
+                this.ui.right.red.addEventListener("change", (this.onRightRedDrag = function () {
+                    _this.rightRednessTo(+_this.ui.right.red.value / 255);
+                    _this.ui.right.redSpinner.value = _this.ui.right.red.value;
+                }));
+                this.ui.right.redSpinner.addEventListener("change", (this.onRightRedSpin = function () {
+                    _this.rightRednessTo(+_this.ui.right.red.value / 255);
+                    _this.ui.right.red.value = _this.ui.right.redSpinner.value;
+                }));
+                this.ui.right.green.addEventListener("change", (this.onRightGreenDrag = function () {
+                    _this.rightGreennessTo(+_this.ui.right.green.value / 255);
+                    _this.ui.right.greenSpinner.value = _this.ui.right.green.value;
+                }));
+                this.ui.right.greenSpinner.addEventListener("change", (this.onRightGreenSpin = function () {
+                    _this.rightGreennessTo(+_this.ui.right.green.value / 255);
+                    _this.ui.right.green.value = _this.ui.right.greenSpinner.value;
+                }));
+                this.ui.right.blue.addEventListener("change", (this.onRightBlueDrag = function () {
+                    _this.rightBluenessTo(+_this.ui.right.green.value / 255);
+                    _this.ui.right.blueSpinner.value = _this.ui.right.blue.value;
+                }));
+                this.ui.right.greenSpinner.addEventListener("change", (this.onRightBlueSpin = function () {
+                    _this.rightBluenessTo(+_this.ui.right.blue.value / 255);
+                    _this.ui.right.blue.value = _this.ui.right.blueSpinner.value;
                 }));
             };
             Controller.prototype.unregister = function () {
@@ -498,6 +628,26 @@ var WebDJS;
                 if (this.onLeftSpeedSpin) {
                     this.ui.left.speedSpinner.removeEventListener("change", this.onLeftSpeedSpin);
                     this.onLeftSpeedSpin = null;
+                }
+                if (this.ui.right.video.oncanplay === this.onRightCanPlay) {
+                    this.ui.right.video.oncanplay = null;
+                    this.onRightCanPlay = null;
+                }
+                if (this.onRightVolumeDrag) {
+                    this.ui.right.volume.removeEventListener("change", this.onRightVolumeDrag);
+                    this.onRightVolumeDrag = null;
+                }
+                if (this.onRightVolumeSpin) {
+                    this.ui.right.volumeSpinner.removeEventListener("change", this.onRightVolumeSpin);
+                    this.onRightVolumeSpin = null;
+                }
+                if (this.onRightSpeedDrag) {
+                    this.ui.right.speed.removeEventListener("change", this.onRightSpeedDrag);
+                    this.onRightSpeedDrag = null;
+                }
+                if (this.onRightSpeedSpin) {
+                    this.ui.right.speedSpinner.removeEventListener("change", this.onRightSpeedSpin);
+                    this.onRightSpeedSpin = null;
                 }
             };
             return Controller;

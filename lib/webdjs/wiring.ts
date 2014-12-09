@@ -20,7 +20,7 @@ module WebDJS {
                     playingTime: <HTMLInputElement>doc.getElementById("timeLeft"),
                     filterOne: <HTMLSelectElement>doc.getElementById("leftFilterOne"),
                     filterTwo: <HTMLSelectElement>doc.getElementById("leftFilterTwo"),
-                    fileInput: <HTMLInputElement>doc.getElementById("leftFile"),
+                    fileInput: <HTMLInputElement>doc.getElementById("leftLoad"),
                     playButton: <HTMLButtonElement>doc.getElementById("leftButtonPlay"),
                     stopButton: <HTMLButtonElement>doc.getElementById("leftButtonStop"),
                     resetButton: <HTMLButtonElement>doc.getElementById("leftButtonStop")

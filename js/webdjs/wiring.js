@@ -21,7 +21,7 @@ var WebDJS;
                     playingTime: doc.getElementById("timeLeft"),
                     filterOne: doc.getElementById("leftFilterOne"),
                     filterTwo: doc.getElementById("leftFilterTwo"),
-                    fileInput: doc.getElementById("leftFile"),
+                    fileInput: doc.getElementById("leftLoad"),
                     playButton: doc.getElementById("leftButtonPlay"),
                     stopButton: doc.getElementById("leftButtonStop"),
                     resetButton: doc.getElementById("leftButtonStop")
