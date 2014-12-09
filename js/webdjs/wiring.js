@@ -42,7 +42,7 @@ var WebDJS;
                     playingTime: doc.getElementById("timeRight"),
                     filterOne: doc.getElementById("rightFilterOne"),
                     filterTwo: doc.getElementById("rightFilterTwo"),
-                    fileInput: doc.getElementById("rightFile"),
+                    fileInput: doc.getElementById("rightLoad"),
                     playButton: doc.getElementById("rightButtonPlay"),
                     stopButton: doc.getElementById("rightButtonStop"),
                     resetButton: doc.getElementById("rightButtonStop")

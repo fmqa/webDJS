@@ -450,6 +450,7 @@ var WebDJS;
                 this.canPlayLeft = false;
                 this.canPlayRight = false;
                 this.onLeftPlayClick = null;
+                this.onLeftStopClick = null;
                 this.onLeftFileSelect = null;
                 this.onLeftCanPlay = null;
                 this.onLeftVolumeDrag = null;
@@ -462,6 +463,9 @@ var WebDJS;
                 this.onLeftGreenSpin = null;
                 this.onLeftBlueDrag = null;
                 this.onLeftBlueSpin = null;
+                this.onRightPlayClick = null;
+                this.onRightStopClick = null;
+                this.onRightFileSelect = null;
                 this.onRightCanPlay = null;
                 this.onRightVolumeDrag = null;
                 this.onRightVolumeSpin = null;
@@ -518,6 +522,10 @@ var WebDJS;
                         _this.ui.left.playButton.value = "Play";
                     }
                 }));
+                this.ui.left.stopButton.addEventListener("click", (this.onLeftStopClick = function () {
+                    _this.ui.left.video.load();
+                    _this.ui.left.playButton.value = "Play";
+                }));
                 this.ui.left.fileInput.addEventListener("change", (this.onLeftFileSelect = function (evt) {
                     _this.ui.left.video.src = URL.createObjectURL(evt.target.files[0]);
                 }));
@@ -533,11 +541,11 @@ var WebDJS;
                     _this.ui.left.volume.value = _this.ui.left.volumeSpinner.value;
                 }));
                 this.ui.left.speed.addEventListener("change", (this.onLeftSpeedDrag = function () {
-                    _this.speedUpLeft(+_this.ui.left.speed.value / 200);
+                    _this.speedUpLeft(+_this.ui.left.speed.value / 100);
                     _this.ui.left.speedSpinner.value = _this.ui.left.speed.value;
                 }));
                 this.ui.left.speedSpinner.addEventListener("change", (this.onLeftSpeedSpin = function () {
-                    _this.speedUpLeft(+_this.ui.left.speedSpinner.value / 200);
+                    _this.speedUpLeft(+_this.ui.left.speedSpinner.value / 100);
                     _this.ui.left.speed.value = _this.ui.left.speedSpinner.value;
                 }));
                 this.ui.left.red.addEventListener("change", (this.onLeftRedDrag = function () {
@@ -563,6 +571,23 @@ var WebDJS;
                 this.ui.left.greenSpinner.addEventListener("change", (this.onLeftBlueSpin = function () {
                     _this.leftBluenessTo(+_this.ui.left.blue.value / 255);
                     _this.ui.left.blue.value = _this.ui.left.blueSpinner.value;
+                }));
+                this.ui.right.playButton.addEventListener("click", (this.onRightPlayClick = function () {
+                    if (_this.ui.right.video.paused) {
+                        _this.ui.right.video.play();
+                        _this.ui.right.playButton.value = "Pause";
+                    }
+                    else {
+                        _this.ui.right.video.pause();
+                        _this.ui.right.playButton.value = "Play";
+                    }
+                }));
+                this.ui.right.stopButton.addEventListener("click", (this.onRightStopClick = function () {
+                    _this.ui.right.video.load();
+                    _this.ui.right.playButton.value = "Play";
+                }));
+                this.ui.right.fileInput.addEventListener("change", (this.onRightFileSelect = function (evt) {
+                    _this.ui.right.video.src = URL.createObjectURL(evt.target.files[0]);
                 }));
                 this.ui.right.video.oncanplay = (this.onRightCanPlay = function () {
                     _this.canPlayRight = true;

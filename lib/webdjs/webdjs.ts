@@ -671,6 +671,7 @@ module WebDJS {
 		    private canPlayLeft : boolean = false;
 		    private canPlayRight : boolean = false;
 		    private onLeftPlayClick : () => void = null;
+		    private onLeftStopClick : () => void = null;
 		    private onLeftFileSelect : (evt : any) => void = null;
 		    private onLeftCanPlay : () => void = null;
 		    private onLeftVolumeDrag : () => void = null;
@@ -683,6 +684,10 @@ module WebDJS {
 		    private onLeftGreenSpin : () => void = null;
 		    private onLeftBlueDrag : () => void = null;
 		    private onLeftBlueSpin : () => void = null;
+		    
+		    private onRightPlayClick : () => void = null;
+		    private onRightStopClick : () => void = null;
+		    private onRightFileSelect : (evt : any) => void = null;
 		    private onRightCanPlay : () => void = null;
 		    private onRightVolumeDrag : () => void = null;
 		    private onRightVolumeSpin : () => void = null;
@@ -738,6 +743,10 @@ module WebDJS {
 		                this.ui.left.playButton.value = "Play";
 		            }
 		        }));
+		        this.ui.left.stopButton.addEventListener("click", (this.onLeftStopClick = () => {
+		            this.ui.left.video.load();
+		            this.ui.left.playButton.value = "Play";
+		        }));
 		        this.ui.left.fileInput.addEventListener("change", (this.onLeftFileSelect = (evt) => {
 		            this.ui.left.video.src = URL.createObjectURL(evt.target.files[0]);
 		        }));
@@ -753,11 +762,11 @@ module WebDJS {
 		            this.ui.left.volume.value = this.ui.left.volumeSpinner.value;
 		        }));
 		        this.ui.left.speed.addEventListener("change", (this.onLeftSpeedDrag = () => {
-		            this.speedUpLeft(+this.ui.left.speed.value / 200);
+		            this.speedUpLeft(+this.ui.left.speed.value / 100);
 		            this.ui.left.speedSpinner.value = this.ui.left.speed.value;
 		        }));
 		        this.ui.left.speedSpinner.addEventListener("change", (this.onLeftSpeedSpin = () => {
-		            this.speedUpLeft(+this.ui.left.speedSpinner.value / 200);
+		            this.speedUpLeft(+this.ui.left.speedSpinner.value / 100);
 		            this.ui.left.speed.value = this.ui.left.speedSpinner.value; 
 		        }));
 		        this.ui.left.red.addEventListener("change", (this.onLeftRedDrag = () => {
@@ -785,6 +794,22 @@ module WebDJS {
 		            this.ui.left.blue.value = this.ui.left.blueSpinner.value;
 		        }));
 		        
+		        this.ui.right.playButton.addEventListener("click", (this.onRightPlayClick = () => {
+		            if (this.ui.right.video.paused) {
+		                this.ui.right.video.play();
+		                this.ui.right.playButton.value = "Pause";
+		            } else {
+		                this.ui.right.video.pause();
+		                this.ui.right.playButton.value = "Play";
+		            }
+		        }));
+		        this.ui.right.stopButton.addEventListener("click", (this.onRightStopClick = () => {
+		            this.ui.right.video.load();
+		            this.ui.right.playButton.value = "Play";
+		        }));
+		        this.ui.right.fileInput.addEventListener("change", (this.onRightFileSelect = (evt) => {
+		            this.ui.right.video.src = URL.createObjectURL(evt.target.files[0]);
+		        }));
 		        this.ui.right.video.oncanplay = (this.onRightCanPlay = () => {
 		            this.canPlayRight = true;
                 });
