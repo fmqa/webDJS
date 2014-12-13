@@ -90,9 +90,13 @@ module WebDJS {
 		    private texture : WebGLTexture;
 		    private context : WebGLRenderingContext;
 		    private target : Consumer;
-		    constructor(src : HTMLVideoElement, texture : WebGLTexture = null) { 
+		    constructor(src : HTMLVideoElement = null, texture : WebGLTexture = null) { 
 		        this.src = src; 
 		        this.bind(texture);
+		    }
+		    inlet(src : HTMLVideoElement) : void {
+		        this.src = src;
+		        this.reload();
 		    }
 		    bind(texture : WebGLTexture) : void {
 		        this.texture = texture;
@@ -120,10 +124,14 @@ module WebDJS {
 	        private texture : WebGLTexture;
 	        private fbo : WebGLFramebuffer;
 	        private target : Consumer;
-	        constructor(scn : Scene, texture : WebGLTexture = null, fbo : WebGLFramebuffer = null) {
+	        constructor(scn : Scene = null, texture : WebGLTexture = null, fbo : WebGLFramebuffer = null) {
 	            this.scn = scn;
 	            this.bind(texture);
 	            this.framebuffer(fbo);
+	        }
+	        inlet(scn : Scene) : void {
+	            this.scn = scn;
+	            this.context = null;
 	        }
 	        bind(texture : WebGLTexture) : void {
 		        this.texture = texture;
@@ -146,6 +154,7 @@ module WebDJS {
 	                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
 	                this.context = gl;
 	            }
+	            gl.viewport(0, 0, this.scn.width(), this.scn.height());
 	            this.scn.apply(gl);
 	            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	            gl.bindTexture(gl.TEXTURE_2D, this.texture);
@@ -659,21 +668,216 @@ module WebDJS {
         export interface UI {
             left : ChannelUI;
             right : ChannelUI;
+            canvas : HTMLCanvasElement;
             fader : HTMLInputElement;
         }
         
-        export class Pipeline {
+        export class Pipeline implements Command {
+            private context : WebGLRenderingContext;
+            
+            private leftVideoSupplierTex : WebGLTexture;
+            private leftVideoSupplier : VideoSupplier = new VideoSupplier();
+            private leftMatrixFilterOne : Convolver = new Convolver();
+            private leftFBOOne : WebGLFramebuffer;
+            private leftFBOConnectorOneTex : WebGLTexture;
+            private leftFBOConnectorOne : FramebufferSupplier = new FramebufferSupplier();
+            private leftMatrixFilterTwo : Convolver = new Convolver();
+            private leftFBOTwo : WebGLFramebuffer;
+            private leftFBOConnectorTwoTex : WebGLTexture;
+            private leftFBOConnectorTwo : FramebufferSupplier = new FramebufferSupplier();
+            private leftRGBAFilter : Simple = new Simple();
+            private leftFBOThree : WebGLFramebuffer;
+            private leftFBOConnectorThreeTex : WebGLTexture;
+            private leftFBOConnectorThree : FramebufferSupplier = new FramebufferSupplier();
+            
+            private rightVideoSupplierTex : WebGLTexture;
+            private rightVideoSupplier : VideoSupplier = new VideoSupplier();
+            private rightMatrixFilterOne : Convolver = new Convolver();
+            private rightFBOOne : WebGLFramebuffer;
+            private rightFBOConnectorOneTex : WebGLTexture;
+            private rightFBOConnectorOne : FramebufferSupplier = new FramebufferSupplier();
+            private rightMatrixFilterTwo : Convolver = new Convolver();
+            private rightFBOTwo : WebGLFramebuffer;
+            private rightFBOConnectorTwoTex : WebGLTexture;
+            private rightFBOConnectorTwo : FramebufferSupplier = new FramebufferSupplier();
+            private rightRGBAFilter : Simple = new Simple();
+            private rightFBOThree : WebGLFramebuffer;
+            private rightFBOConnectorThreeTex : WebGLTexture;
+            private rightFBOConnectorThree : FramebufferSupplier = new FramebufferSupplier();
+            private mixer : Mixer = new Mixer();
+            private leftUpdate : boolean = false;
+            private rightUpdate : boolean = false;
+            constructor() {
+                this.leftRGBAFilter.flipy(-1);
+                this.rightRGBAFilter.flipy(-1);
+                this.mixer.fade(0.5);
+            }
+            leftInlet(l : HTMLVideoElement) : void {
+                this.leftVideoSupplier.inlet(l);
+            }
+            rightInlet(r : HTMLVideoElement) : void {
+                this.rightVideoSupplier.inlet(r);
+            }
+            colorizeLeft(red : number, green : number, blue : number, alpha : number) : void {
+                this.leftRGBAFilter.colorize(red, green, blue, alpha);
+            }
+            colorizeRight(red : number, green : number, blue : number, alpha : number) : void {
+                this.leftRGBAFilter.colorize(red, green, blue, alpha);
+            }
+            fade(value : number) : void {
+                this.mixer.fade(value);
+            }
+            updateLeft() : void {
+                this.leftUpdate = true;
+            }
+            updateRight() : void {
+                this.rightUpdate = true;
+            }
+            apply(gl : WebGLRenderingContext) : void {
+                if (gl !== this.context) {
+                    this.leftVideoSupplierTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.leftVideoSupplierTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.leftVideoSupplier.bind(this.leftVideoSupplierTex);
+                    
+                    this.leftFBOConnectorOneTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.leftFBOConnectorOneTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.leftFBOConnectorOne.bind(this.leftFBOConnectorOneTex);
+                    this.leftFBOOne = gl.createFramebuffer();
+                    this.leftFBOConnectorOne.framebuffer(this.leftFBOOne);
+                    
+                    this.leftFBOConnectorTwoTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.leftFBOConnectorTwoTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.leftFBOConnectorTwo.bind(this.leftFBOConnectorTwoTex);
+                    this.leftFBOTwo = gl.createFramebuffer();
+                    this.leftFBOConnectorTwo.framebuffer(this.leftFBOTwo);
+                    
+                    this.leftFBOConnectorThreeTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.leftFBOConnectorThreeTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.leftFBOConnectorThree.bind(this.leftFBOConnectorThreeTex);
+                    this.leftFBOThree = gl.createFramebuffer();
+                    this.leftFBOConnectorThree.framebuffer(this.leftFBOThree);
+                    
+                    // Build left scene graph
+                    this.leftVideoSupplier.register(this.leftMatrixFilterOne);
+                    
+                    this.leftFBOConnectorOne.inlet(this.leftMatrixFilterOne);
+                    this.leftFBOConnectorOne.register(this.leftMatrixFilterTwo);
+                    
+                    this.leftFBOConnectorTwo.inlet(this.leftMatrixFilterTwo);
+                    this.leftFBOConnectorTwo.register(this.leftRGBAFilter);
+                    
+                    this.leftFBOConnectorThree.inlet(this.leftRGBAFilter);
+                    this.leftFBOConnectorThree.register(this.mixer.left());
+                    
+                    this.rightVideoSupplierTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.rightVideoSupplierTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.rightVideoSupplier.bind(this.rightVideoSupplierTex);
+                    
+                    this.rightFBOConnectorOneTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.rightFBOConnectorOneTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.rightFBOConnectorOne.bind(this.rightFBOConnectorOneTex);
+                    this.rightFBOOne = gl.createFramebuffer();
+                    this.rightFBOConnectorOne.framebuffer(this.rightFBOOne);
+                    
+                    this.rightFBOConnectorTwoTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.rightFBOConnectorTwoTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.rightFBOConnectorTwo.bind(this.rightFBOConnectorTwoTex);
+                    this.rightFBOTwo = gl.createFramebuffer();
+                    this.rightFBOConnectorTwo.framebuffer(this.rightFBOTwo);
+                    
+                    this.rightFBOConnectorThreeTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.rightFBOConnectorThreeTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.rightFBOConnectorThree.bind(this.rightFBOConnectorThreeTex);
+                    this.rightFBOThree = gl.createFramebuffer();
+                    this.rightFBOConnectorThree.framebuffer(this.rightFBOThree);
+                    
+                    // Build right scene graph
+                    this.rightVideoSupplier.register(this.rightMatrixFilterOne);
+                    
+                    this.rightFBOConnectorOne.inlet(this.rightMatrixFilterOne);
+                    this.rightFBOConnectorOne.register(this.rightMatrixFilterTwo);
+                    
+                    this.rightFBOConnectorTwo.inlet(this.rightMatrixFilterTwo);
+                    this.rightFBOConnectorTwo.register(this.rightRGBAFilter);
+                    
+                    this.rightFBOConnectorThree.inlet(this.rightRGBAFilter);
+                    this.rightFBOConnectorThree.register(this.mixer.right());
+                }
+                
+                if (this.leftUpdate) {
+                    this.leftVideoSupplier.reload();
+                    this.leftVideoSupplier.apply(gl);
+                    this.leftFBOConnectorOne.apply(gl);
+                    this.leftFBOConnectorTwo.apply(gl);
+                    this.leftFBOConnectorThree.apply(gl);
+                    this.leftUpdate = false;
+                }
+                
+                if (this.rightUpdate) {
+                    this.rightVideoSupplier.reload();
+                    this.rightVideoSupplier.apply(gl);
+                    this.rightFBOConnectorOne.apply(gl);
+                    this.rightFBOConnectorTwo.apply(gl);
+                    this.rightFBOConnectorThree.apply(gl);
+                    this.rightUpdate = false;
+                }
+                
+                gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+                this.mixer.apply(gl);
+                
+                if (gl !== this.context) {
+                    this.context = gl;
+                }
+            }
         }
 
         export class Controller {
 		    private ui : UI;
-		    private pipe : Pipeline;
+		    private gl : WebGLRenderingContext = null;
+		    private pipe : Pipeline = new Pipeline();
 		    private canPlayLeft : boolean = false;
+		    private leftPlaying : boolean = false;
 		    private canPlayRight : boolean = false;
+		    private rightPlaying : boolean = false;
 		    private onLeftPlayClick : () => void = null;
 		    private onLeftStopClick : () => void = null;
 		    private onLeftFileSelect : (evt : any) => void = null;
 		    private onLeftCanPlay : () => void = null;
+		    private onLeftPlaying : () => void = null;
+		    private onLeftPaused : () => void = null;
+		    private onLeftTimeUpdate : () => void = null;
 		    private onLeftVolumeDrag : () => void = null;
 		    private onLeftVolumeSpin : () => void = null;
 		    private onLeftSpeedDrag : () => void = null;
@@ -684,11 +888,12 @@ module WebDJS {
 		    private onLeftGreenSpin : () => void = null;
 		    private onLeftBlueDrag : () => void = null;
 		    private onLeftBlueSpin : () => void = null;
-		    
 		    private onRightPlayClick : () => void = null;
 		    private onRightStopClick : () => void = null;
 		    private onRightFileSelect : (evt : any) => void = null;
 		    private onRightCanPlay : () => void = null;
+		    private onRightPlaying : () => void = null;
+		    private onRightPaused : () => void = null;
 		    private onRightVolumeDrag : () => void = null;
 		    private onRightVolumeSpin : () => void = null;
 		    private onRightSpeedDrag : () => void = null;
@@ -699,9 +904,21 @@ module WebDJS {
 		    private onRightGreenSpin : () => void = null;
 		    private onRightBlueDrag : () => void = null;
 		    private onRightBlueSpin : () => void = null;
-		    constructor(ui : UI, pipe : Pipeline) {
+		    private onFaderDrag : () => void = null;
+		    private leftRedness : number = 1;
+		    private leftGreenness : number = 1;
+		    private leftBlueness : number = 1;
+		    private rightRedness : number = 1;
+		    private rightGreenness : number = 1;
+		    private rightBlueness : number = 1;
+		    constructor(ui : UI) {
 		        this.ui = ui;
-		        this.pipe = pipe;
+		        var glContextTypes : string[] = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"];
+		        for (var i : number = 0; i < glContextTypes.length && !this.gl; ++i) {
+                    this.gl = this.ui.canvas.getContext(glContextTypes[i]);
+                }
+                this.pipe.leftInlet(this.ui.left.video);
+                this.pipe.rightInlet(this.ui.right.video);
 		    }
 		    speedUpLeft(factor : number) : void {
 		        this.ui.left.video.playbackRate = factor;
@@ -710,13 +927,16 @@ module WebDJS {
 		        this.ui.left.video.volume = percentage;
 		    }
 		    leftRednessTo(percentage : number) : void {
-		        // Change renderer
+		        this.leftRedness = percentage;
+		        this.pipe.colorizeLeft(this.leftRedness, this.leftGreenness, this.leftBlueness, 1);
 		    }
 		    leftGreennessTo(percentage : number) : void {
-		        // Change renderer
+		        this.leftGreenness = percentage;
+		        this.pipe.colorizeLeft(this.leftRedness, this.leftGreenness, this.leftBlueness, 1);
 		    }
 		    leftBluenessTo(percentage : number) : void {
-		        // Change renderer
+		        this.leftBlueness = percentage;
+		        this.pipe.colorizeLeft(this.leftRedness, this.leftGreenness, this.leftBlueness, 1);
 		    }
 		    speedUpRight(factor : number) : void {
 		        this.ui.right.video.playbackRate = factor;
@@ -725,13 +945,35 @@ module WebDJS {
 		        this.ui.right.video.volume = percentage;
 		    }
 		    rightRednessTo(percentage : number) : void {
-		        // Change renderer
+		        this.rightRedness = percentage;
+		        this.pipe.colorizeRight(this.rightRedness, this.rightGreenness, this.rightBlueness, 1);
 		    }
 		    rightGreennessTo(percentage : number) : void {
-		        // Change renderer
+		        this.rightGreenness = percentage;
+		        this.pipe.colorizeRight(this.rightRedness, this.rightGreenness, this.rightBlueness, 1);
 		    }
 		    rightBluenessTo(percentage : number) : void {
-		        // Change renderer
+		        this.rightBlueness = percentage;
+		        this.pipe.colorizeRight(this.rightRedness, this.rightGreenness, this.rightBlueness, 1);
+		    }
+		    updateLeftFrame() : void {
+		        this.pipe.updateLeft();
+		        this.pipe.apply(this.gl);
+		    }
+		    updateRightFrame() : void {
+		        this.pipe.updateRight();
+		        this.pipe.apply(this.gl);
+		    }
+		    update() : void {
+		        if (this.leftPlaying) {
+		            this.updateLeftFrame();
+		        }
+		        if (this.rightPlaying) {
+		            this.updateRightFrame();
+		        }
+		        if (this.leftPlaying || this.rightPlaying) {
+		            requestAnimationFrame(() => {this.update();});
+		        }
 		    }
 		    register() : void {
 		        this.ui.left.playButton.addEventListener("click", (this.onLeftPlayClick = () => {
@@ -748,10 +990,32 @@ module WebDJS {
 		            this.ui.left.playButton.value = "Play";
 		        }));
 		        this.ui.left.fileInput.addEventListener("change", (this.onLeftFileSelect = (evt) => {
+		            if (!this.ui.left.video.paused) {
+		                this.ui.left.playButton.value = "Play";
+		            }
 		            this.ui.left.video.src = URL.createObjectURL(evt.target.files[0]);
 		        }));
 		        this.ui.left.video.oncanplay = (this.onLeftCanPlay = () => {
 		            this.canPlayLeft = true;
+                });
+                this.ui.left.video.onplaying = (this.onLeftPlaying = () => {
+                    this.leftPlaying = true;
+                    this.update();
+                });
+                this.ui.left.video.onpause = (this.onLeftPaused = () => {
+                    this.leftPlaying = false;
+                });
+                this.ui.left.video.ontimeupdate = (this.onLeftTimeUpdate = () => {
+                    if (isNaN(this.ui.left.video.currentTime / this.ui.left.video.duration)) {
+                        this.ui.left.playingTime.value = "--";
+                        return;
+                    }
+                    this.ui.left.playingTime.value = Math.floor(this.ui.left.video.currentTime / 3600) + "h" +
+                                                     Math.floor((this.ui.left.video.currentTime / 60) % 60) + "m" +
+                                                     Math.floor(this.ui.left.video.currentTime % 60) + "s" +
+                                                     " (" + 
+                                                     Math.floor((this.ui.left.video.currentTime / this.ui.left.video.duration) * 100) +
+                                                     "%)";
                 });
 		        this.ui.left.volume.addEventListener("change", (this.onLeftVolumeDrag = () => {
 		            this.volumeLeftTo(+this.ui.left.volume.value / 100);
@@ -786,10 +1050,10 @@ module WebDJS {
 		            this.ui.left.green.value = this.ui.left.greenSpinner.value;
 		        }));
 		        this.ui.left.blue.addEventListener("change", (this.onLeftBlueDrag = () => {
-		            this.leftBluenessTo(+this.ui.left.green.value / 255);
+		            this.leftBluenessTo(+this.ui.left.blue.value / 255);
 		            this.ui.left.blueSpinner.value = this.ui.left.blue.value;
 		        }));
-		        this.ui.left.greenSpinner.addEventListener("change", (this.onLeftBlueSpin = () => {
+		        this.ui.left.blueSpinner.addEventListener("change", (this.onLeftBlueSpin = () => {
 		            this.leftBluenessTo(+this.ui.left.blue.value / 255);
 		            this.ui.left.blue.value = this.ui.left.blueSpinner.value;
 		        }));
@@ -808,10 +1072,32 @@ module WebDJS {
 		            this.ui.right.playButton.value = "Play";
 		        }));
 		        this.ui.right.fileInput.addEventListener("change", (this.onRightFileSelect = (evt) => {
+		            if (!this.ui.left.video.paused) {
+		                this.ui.left.playButton.value = "Play";
+		            }
 		            this.ui.right.video.src = URL.createObjectURL(evt.target.files[0]);
 		        }));
 		        this.ui.right.video.oncanplay = (this.onRightCanPlay = () => {
 		            this.canPlayRight = true;
+                });
+                this.ui.right.video.onplaying = (this.onRightPlaying = () => {
+                    this.rightPlaying = true;
+                    this.update();
+                });
+                this.ui.right.video.onpause = (this.onRightPaused = () => {
+                    this.rightPlaying = false;
+                });
+                this.ui.right.video.ontimeupdate = (this.onLeftTimeUpdate = () => {
+                    if (isNaN(this.ui.right.video.currentTime / this.ui.right.video.duration)) {
+                        this.ui.right.playingTime.value = "--";
+                        return;
+                    }
+                    this.ui.right.playingTime.value = Math.floor(this.ui.right.video.currentTime / 3600) + "h" +
+                                                      Math.floor((this.ui.right.video.currentTime / 60) % 60) + "m" +
+                                                      Math.floor(this.ui.right.video.currentTime % 60) + "s" +
+                                                      " (" + 
+                                                      Math.floor((this.ui.right.video.currentTime / this.ui.right.video.duration) * 100) +
+                                                      "%)";
                 });
 		        this.ui.right.volume.addEventListener("change", (this.onRightVolumeDrag = () => {
 		            this.volumeRightTo(+this.ui.right.volume.value / 100);
@@ -846,12 +1132,16 @@ module WebDJS {
 		            this.ui.right.green.value = this.ui.right.greenSpinner.value;
 		        }));
 		        this.ui.right.blue.addEventListener("change", (this.onRightBlueDrag = () => {
-		            this.rightBluenessTo(+this.ui.right.green.value / 255);
+		            this.rightBluenessTo(+this.ui.right.blue.value / 255);
 		            this.ui.right.blueSpinner.value = this.ui.right.blue.value;
 		        }));
-		        this.ui.right.greenSpinner.addEventListener("change", (this.onRightBlueSpin = () => {
+		        this.ui.right.blueSpinner.addEventListener("change", (this.onRightBlueSpin = () => {
 		            this.rightBluenessTo(+this.ui.right.blue.value / 255);
 		            this.ui.right.blue.value = this.ui.right.blueSpinner.value;
+		        }));
+		        
+		        this.ui.fader.addEventListener("change", (this.onFaderDrag = () => {
+		            this.pipe.fade(+this.ui.fader.value / 100);
 		        }));
 		    }
 		    unregister() : void {
