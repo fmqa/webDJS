@@ -483,7 +483,7 @@ var WebDJS;
                 this.leftRGBAFilter.colorize(red, green, blue, alpha);
             };
             Pipeline.prototype.colorizeRight = function (red, green, blue, alpha) {
-                this.leftRGBAFilter.colorize(red, green, blue, alpha);
+                this.rightRGBAFilter.colorize(red, green, blue, alpha);
             };
             Pipeline.prototype.fade = function (value) {
                 this.mixer.fade(value);
@@ -845,11 +845,11 @@ var WebDJS;
                     _this.ui.right.volume.value = _this.ui.right.volumeSpinner.value;
                 }));
                 this.ui.right.speed.addEventListener("change", (this.onRightSpeedDrag = function () {
-                    _this.speedUpRight(+_this.ui.right.speed.value / 200);
+                    _this.speedUpRight(+_this.ui.right.speed.value / 100);
                     _this.ui.right.speedSpinner.value = _this.ui.right.speed.value;
                 }));
                 this.ui.right.speedSpinner.addEventListener("change", (this.onRightSpeedSpin = function () {
-                    _this.speedUpRight(+_this.ui.right.speedSpinner.value / 200);
+                    _this.speedUpRight(+_this.ui.right.speedSpinner.value / 100);
                     _this.ui.right.speed.value = _this.ui.right.speedSpinner.value;
                 }));
                 this.ui.right.red.addEventListener("change", (this.onRightRedDrag = function () {

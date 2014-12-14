@@ -722,7 +722,7 @@ module WebDJS {
                 this.leftRGBAFilter.colorize(red, green, blue, alpha);
             }
             colorizeRight(red : number, green : number, blue : number, alpha : number) : void {
-                this.leftRGBAFilter.colorize(red, green, blue, alpha);
+                this.rightRGBAFilter.colorize(red, green, blue, alpha);
             }
             fade(value : number) : void {
                 this.mixer.fade(value);
@@ -1108,11 +1108,11 @@ module WebDJS {
 		            this.ui.right.volume.value = this.ui.right.volumeSpinner.value;
 		        }));
 		        this.ui.right.speed.addEventListener("change", (this.onRightSpeedDrag = () => {
-		            this.speedUpRight(+this.ui.right.speed.value / 200);
+		            this.speedUpRight(+this.ui.right.speed.value / 100);
 		            this.ui.right.speedSpinner.value = this.ui.right.speed.value;
 		        }));
 		        this.ui.right.speedSpinner.addEventListener("change", (this.onRightSpeedSpin = () => {
-		            this.speedUpRight(+this.ui.right.speedSpinner.value / 200);
+		            this.speedUpRight(+this.ui.right.speedSpinner.value / 100);
 		            this.ui.right.speed.value = this.ui.right.speedSpinner.value; 
 		        }));
 		        this.ui.right.red.addEventListener("change", (this.onRightRedDrag = () => {
