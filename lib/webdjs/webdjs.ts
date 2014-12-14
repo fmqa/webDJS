@@ -1138,7 +1138,7 @@ module WebDJS {
                     this.rightPlaying = false;
                 });
                 this.ui.right.video.onended = (this.onRightEnded = () => {
-                    this.ui.left.playButton.value = "Play";
+                    this.ui.right.playButton.value = "Play";
                 });
                 this.ui.right.video.ontimeupdate = (this.onLeftTimeUpdate = () => {
                     if (isNaN(this.ui.right.video.currentTime / this.ui.right.video.duration)) {

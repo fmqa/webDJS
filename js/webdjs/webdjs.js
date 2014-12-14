@@ -879,7 +879,7 @@ var WebDJS;
                     _this.rightPlaying = false;
                 });
                 this.ui.right.video.onended = (this.onRightEnded = function () {
-                    _this.ui.left.playButton.value = "Play";
+                    _this.ui.right.playButton.value = "Play";
                 });
                 this.ui.right.video.ontimeupdate = (this.onLeftTimeUpdate = function () {
                     if (isNaN(_this.ui.right.video.currentTime / _this.ui.right.video.duration)) {
