@@ -874,7 +874,24 @@ module WebDJS {
                 }
             }
         }
-
+        
+        var kernels : {[key : string] : Float32Array} = {};
+        kernels['id'] = new Float32Array([0,0,0,0,1,0,0,0,0]);
+        kernels['hsobel'] = new Float32Array([1,2,1,0,0,0,-1,-2,-1]);
+        kernels['vsobel'] = new Float32Array([1,0,-1,2,0,-2,1,0,-1]);
+        kernels['gaussianI'] = new Float32Array([0.045,0.122,0.045,0.122,0.332,0.122,0.045,0.122,0.045]);
+        kernels['gaussianII'] = new Float32Array([1,2,1,2,4,2,1,2,1]);
+        kernels['gaussianIII'] = new Float32Array([0,1,0,1,1,1,0,1,0]);
+        kernels['unsharpen'] = new Float32Array([-1,-1,-1,-1,9,-1,-1,-1,-1]);
+        kernels['sharpen'] = new Float32Array([-1,-1,-1,-1,16,-1,-1,-1,-1]);
+        kernels['emboss'] = new Float32Array([-2,-1,0,-1,1,1,0,1,2]);
+        kernels['edgedtctI'] = new Float32Array([-0.125,-0.125,-0.125,-0.125,1,-0.125,-0.125,-0.125,-0.125]);
+        kernels['edgedtctII'] = new Float32Array([-1,-1,-1,-1,8,-1,-1,-1,-1]);
+        kernels['edgedtctIII'] = new Float32Array([-5,0,0,0,0,0,0,0,5]);
+        kernels['edgedtctIV'] = new Float32Array([-1,-1,-1,0,0,0,1,1,1]);
+        kernels['edgedtctV'] = new Float32Array([-1,-1,-1,2,2,2,-1,-1,-1]);
+        kernels['edgedtctVI'] = new Float32Array([-5,-5,-5,-5,39,-5,-5,-5,-5]);
+        
         export class Controller {
 		    private ui : UI;
 		    private gl : WebGLRenderingContext = null;
@@ -885,6 +902,7 @@ module WebDJS {
 		    private rightPlaying : boolean = false;
 		    private onLeftPlayClick : () => void = null;
 		    private onLeftStopClick : () => void = null;
+		    private onLeftEnded : () => void = null;
 		    private onLeftFileSelect : (evt : any) => void = null;
 		    private onLeftCanPlay : () => void = null;
 		    private onLeftPlaying : () => void = null;
@@ -900,8 +918,11 @@ module WebDJS {
 		    private onLeftGreenSpin : () => void = null;
 		    private onLeftBlueDrag : () => void = null;
 		    private onLeftBlueSpin : () => void = null;
+		    private onLeftMatrixOneChange : () => void = null;
+		    private onLeftMatrixTwoChange : () => void = null;
 		    private onRightPlayClick : () => void = null;
 		    private onRightStopClick : () => void = null;
+		    private onRightEnded : () => void = null;
 		    private onRightFileSelect : (evt : any) => void = null;
 		    private onRightCanPlay : () => void = null;
 		    private onRightPlaying : () => void = null;
@@ -916,6 +937,8 @@ module WebDJS {
 		    private onRightGreenSpin : () => void = null;
 		    private onRightBlueDrag : () => void = null;
 		    private onRightBlueSpin : () => void = null;
+		    private onRightMatrixOneChange : () => void = null;
+		    private onRightMatrixTwoChange : () => void = null;
 		    private onFaderDrag : () => void = null;
 		    private leftRedness : number = 1;
 		    private leftGreenness : number = 1;
@@ -1020,6 +1043,9 @@ module WebDJS {
                 this.ui.left.video.onpause = (this.onLeftPaused = () => {
                     this.leftPlaying = false;
                 });
+                this.ui.left.video.onended = (this.onLeftEnded = () => {
+                    this.ui.left.playButton.value = "Play";
+                });
                 this.ui.left.video.ontimeupdate = (this.onLeftTimeUpdate = () => {
                     if (isNaN(this.ui.left.video.currentTime / this.ui.left.video.duration)) {
                         this.ui.left.playingTime.value = "--";
@@ -1074,6 +1100,12 @@ module WebDJS {
 		            this.leftBluenessTo(+this.ui.left.blue.value / 255);
 		            this.ui.left.blue.value = this.ui.left.blueSpinner.value;
 		        }));
+		        this.ui.left.filterOne.addEventListener("change", (this.onLeftMatrixOneChange = () => {
+		            this.pipe.leftConvOne(kernels[this.ui.left.filterOne.value]);
+		        }));
+		        this.ui.left.filterTwo.addEventListener("change", (this.onLeftMatrixTwoChange = () => {
+		            this.pipe.leftConvTwo(kernels[this.ui.left.filterTwo.value]);
+		        }));
 		        
 		        this.ui.right.playButton.addEventListener("click", (this.onRightPlayClick = () => {
 		            if (this.ui.right.video.paused) {
@@ -1104,6 +1136,9 @@ module WebDJS {
                 });
                 this.ui.right.video.onpause = (this.onRightPaused = () => {
                     this.rightPlaying = false;
+                });
+                this.ui.right.video.onended = (this.onRightEnded = () => {
+                    this.ui.left.playButton.value = "Play";
                 });
                 this.ui.right.video.ontimeupdate = (this.onLeftTimeUpdate = () => {
                     if (isNaN(this.ui.right.video.currentTime / this.ui.right.video.duration)) {
@@ -1158,6 +1193,12 @@ module WebDJS {
 		        this.ui.right.blueSpinner.addEventListener("change", (this.onRightBlueSpin = () => {
 		            this.rightBluenessTo(+this.ui.right.blue.value / 255);
 		            this.ui.right.blue.value = this.ui.right.blueSpinner.value;
+		        }));
+		        this.ui.right.filterOne.addEventListener("change", (this.onRightMatrixOneChange = () => {
+		            this.pipe.rightConvOne(kernels[this.ui.right.filterOne.value]);
+		        }));
+		        this.ui.right.filterTwo.addEventListener("change", (this.onRightMatrixTwoChange = () => {
+		            this.pipe.rightConvTwo(kernels[this.ui.right.filterTwo.value]);
 		        }));
 		        
 		        this.ui.fader.addEventListener("change", (this.onFaderDrag = () => {

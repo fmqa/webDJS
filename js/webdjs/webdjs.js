@@ -618,6 +618,22 @@ var WebDJS;
             return Pipeline;
         })();
         VJ.Pipeline = Pipeline;
+        var kernels = {};
+        kernels['id'] = new Float32Array([0, 0, 0, 0, 1, 0, 0, 0, 0]);
+        kernels['hsobel'] = new Float32Array([1, 2, 1, 0, 0, 0, -1, -2, -1]);
+        kernels['vsobel'] = new Float32Array([1, 0, -1, 2, 0, -2, 1, 0, -1]);
+        kernels['gaussianI'] = new Float32Array([0.045, 0.122, 0.045, 0.122, 0.332, 0.122, 0.045, 0.122, 0.045]);
+        kernels['gaussianII'] = new Float32Array([1, 2, 1, 2, 4, 2, 1, 2, 1]);
+        kernels['gaussianIII'] = new Float32Array([0, 1, 0, 1, 1, 1, 0, 1, 0]);
+        kernels['unsharpen'] = new Float32Array([-1, -1, -1, -1, 9, -1, -1, -1, -1]);
+        kernels['sharpen'] = new Float32Array([-1, -1, -1, -1, 16, -1, -1, -1, -1]);
+        kernels['emboss'] = new Float32Array([-2, -1, 0, -1, 1, 1, 0, 1, 2]);
+        kernels['edgedtctI'] = new Float32Array([-0.125, -0.125, -0.125, -0.125, 1, -0.125, -0.125, -0.125, -0.125]);
+        kernels['edgedtctII'] = new Float32Array([-1, -1, -1, -1, 8, -1, -1, -1, -1]);
+        kernels['edgedtctIII'] = new Float32Array([-5, 0, 0, 0, 0, 0, 0, 0, 5]);
+        kernels['edgedtctIV'] = new Float32Array([-1, -1, -1, 0, 0, 0, 1, 1, 1]);
+        kernels['edgedtctV'] = new Float32Array([-1, -1, -1, 2, 2, 2, -1, -1, -1]);
+        kernels['edgedtctVI'] = new Float32Array([-5, -5, -5, -5, 39, -5, -5, -5, -5]);
         var Controller = (function () {
             function Controller(ui) {
                 this.gl = null;
@@ -628,6 +644,7 @@ var WebDJS;
                 this.rightPlaying = false;
                 this.onLeftPlayClick = null;
                 this.onLeftStopClick = null;
+                this.onLeftEnded = null;
                 this.onLeftFileSelect = null;
                 this.onLeftCanPlay = null;
                 this.onLeftPlaying = null;
@@ -643,8 +660,11 @@ var WebDJS;
                 this.onLeftGreenSpin = null;
                 this.onLeftBlueDrag = null;
                 this.onLeftBlueSpin = null;
+                this.onLeftMatrixOneChange = null;
+                this.onLeftMatrixTwoChange = null;
                 this.onRightPlayClick = null;
                 this.onRightStopClick = null;
+                this.onRightEnded = null;
                 this.onRightFileSelect = null;
                 this.onRightCanPlay = null;
                 this.onRightPlaying = null;
@@ -659,6 +679,8 @@ var WebDJS;
                 this.onRightGreenSpin = null;
                 this.onRightBlueDrag = null;
                 this.onRightBlueSpin = null;
+                this.onRightMatrixOneChange = null;
+                this.onRightMatrixTwoChange = null;
                 this.onFaderDrag = null;
                 this.leftRedness = 1;
                 this.leftGreenness = 1;
@@ -767,6 +789,9 @@ var WebDJS;
                 this.ui.left.video.onpause = (this.onLeftPaused = function () {
                     _this.leftPlaying = false;
                 });
+                this.ui.left.video.onended = (this.onLeftEnded = function () {
+                    _this.ui.left.playButton.value = "Play";
+                });
                 this.ui.left.video.ontimeupdate = (this.onLeftTimeUpdate = function () {
                     if (isNaN(_this.ui.left.video.currentTime / _this.ui.left.video.duration)) {
                         _this.ui.left.playingTime.value = "--";
@@ -816,6 +841,12 @@ var WebDJS;
                     _this.leftBluenessTo(+_this.ui.left.blue.value / 255);
                     _this.ui.left.blue.value = _this.ui.left.blueSpinner.value;
                 }));
+                this.ui.left.filterOne.addEventListener("change", (this.onLeftMatrixOneChange = function () {
+                    _this.pipe.leftConvOne(kernels[_this.ui.left.filterOne.value]);
+                }));
+                this.ui.left.filterTwo.addEventListener("change", (this.onLeftMatrixTwoChange = function () {
+                    _this.pipe.leftConvTwo(kernels[_this.ui.left.filterTwo.value]);
+                }));
                 this.ui.right.playButton.addEventListener("click", (this.onRightPlayClick = function () {
                     if (_this.ui.right.video.paused) {
                         _this.ui.right.video.play();
@@ -846,6 +877,9 @@ var WebDJS;
                 });
                 this.ui.right.video.onpause = (this.onRightPaused = function () {
                     _this.rightPlaying = false;
+                });
+                this.ui.right.video.onended = (this.onRightEnded = function () {
+                    _this.ui.left.playButton.value = "Play";
                 });
                 this.ui.right.video.ontimeupdate = (this.onLeftTimeUpdate = function () {
                     if (isNaN(_this.ui.right.video.currentTime / _this.ui.right.video.duration)) {
@@ -895,6 +929,12 @@ var WebDJS;
                 this.ui.right.blueSpinner.addEventListener("change", (this.onRightBlueSpin = function () {
                     _this.rightBluenessTo(+_this.ui.right.blue.value / 255);
                     _this.ui.right.blue.value = _this.ui.right.blueSpinner.value;
+                }));
+                this.ui.right.filterOne.addEventListener("change", (this.onRightMatrixOneChange = function () {
+                    _this.pipe.rightConvOne(kernels[_this.ui.right.filterOne.value]);
+                }));
+                this.ui.right.filterTwo.addEventListener("change", (this.onRightMatrixTwoChange = function () {
+                    _this.pipe.rightConvTwo(kernels[_this.ui.right.filterTwo.value]);
                 }));
                 this.ui.fader.addEventListener("change", (this.onFaderDrag = function () {
                     _this.pipe.fade(+_this.ui.fader.value / 100);
