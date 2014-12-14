@@ -379,6 +379,24 @@
                 var controller = new WebDJS.VJ.Controller(WebDJS.Wiring.wireVJ(document));
                 controller.register();
             })();
+            
+            window.addEventListener('keydown',this.onkey,false);
+            var maximized = false;
+            function onkey(e) {
+                var code = e.keyCode;
+                if (code == 70) {
+                    if (maximized) {
+                        document.getElementById('canvas').width = 540;
+                        document.getElementById('canvas').height = 360;
+                        maximized = false;
+                    } else {
+                        document.getElementById('canvas').width = window.innerWidth - 64;
+                        document.getElementById('canvas').height = window.innerHeight - 64;
+                        maximized = true;
+                    }
+                }
+            }
+            
         </script>
 	</body>
 </html>
