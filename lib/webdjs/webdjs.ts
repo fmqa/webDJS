@@ -724,6 +724,18 @@ module WebDJS {
             colorizeRight(red : number, green : number, blue : number, alpha : number) : void {
                 this.rightRGBAFilter.colorize(red, green, blue, alpha);
             }
+            leftConvOne(m : Float32Array) : void {
+                this.leftMatrixFilterOne.transform(m);
+            }
+            leftConvTwo(m : Float32Array) : void {
+                this.leftMatrixFilterTwo.transform(m);
+            }
+            rightConvOne(m : Float32Array) : void {
+                this.rightMatrixFilterOne.transform(m);
+            }
+            rightConvTwo(m : Float32Array) : void {
+                this.rightMatrixFilterTwo.transform(m);
+            }
             fade(value : number) : void {
                 this.mixer.fade(value);
             }
@@ -911,6 +923,8 @@ module WebDJS {
 		    private rightRedness : number = 1;
 		    private rightGreenness : number = 1;
 		    private rightBlueness : number = 1;
+		    private leftSpeed : number = 1;
+		    private rightSpeed : number = 1;
 		    constructor(ui : UI) {
 		        this.ui = ui;
 		        var glContextTypes : string[] = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"];
@@ -920,8 +934,8 @@ module WebDJS {
                 this.pipe.leftInlet(this.ui.left.video);
                 this.pipe.rightInlet(this.ui.right.video);
 		    }
-		    speedUpLeft(factor : number) : void {
-		        this.ui.left.video.playbackRate = factor;
+		    speedUpLeft() : void {
+		        this.ui.left.video.playbackRate = this.leftSpeed;
 		    }
 		    volumeLeftTo(percentage : number) : void {
 		        this.ui.left.video.volume = percentage;
@@ -938,8 +952,8 @@ module WebDJS {
 		        this.leftBlueness = percentage;
 		        this.pipe.colorizeLeft(this.leftRedness, this.leftGreenness, this.leftBlueness, 1);
 		    }
-		    speedUpRight(factor : number) : void {
-		        this.ui.right.video.playbackRate = factor;
+		    speedUpRight() : void {
+		        this.ui.right.video.playbackRate = this.rightSpeed;
 		    }
 		    volumeRightTo(percentage : number) : void {
 		        this.ui.right.video.volume = percentage;
@@ -979,6 +993,7 @@ module WebDJS {
 		        this.ui.left.playButton.addEventListener("click", (this.onLeftPlayClick = () => {
 		            if (this.ui.left.video.paused) {
 		                this.ui.left.video.play();
+		                this.speedUpLeft();
 		                this.ui.left.playButton.value = "Pause";
 		            } else {
 		                this.ui.left.video.pause();
@@ -1026,12 +1041,14 @@ module WebDJS {
 		            this.ui.left.volume.value = this.ui.left.volumeSpinner.value;
 		        }));
 		        this.ui.left.speed.addEventListener("change", (this.onLeftSpeedDrag = () => {
-		            this.speedUpLeft(+this.ui.left.speed.value / 100);
+		            this.leftSpeed = +this.ui.left.speed.value / 100;
+		            this.speedUpLeft();
 		            this.ui.left.speedSpinner.value = this.ui.left.speed.value;
 		        }));
 		        this.ui.left.speedSpinner.addEventListener("change", (this.onLeftSpeedSpin = () => {
-		            this.speedUpLeft(+this.ui.left.speedSpinner.value / 100);
-		            this.ui.left.speed.value = this.ui.left.speedSpinner.value; 
+		            this.leftSpeed = +this.ui.left.speedSpinner.value / 100;
+		            this.speedUpLeft();
+		            this.ui.left.speed.value = this.ui.left.speedSpinner.value;
 		        }));
 		        this.ui.left.red.addEventListener("change", (this.onLeftRedDrag = () => {
 		            this.leftRednessTo(+this.ui.left.red.value / 255);
@@ -1061,6 +1078,7 @@ module WebDJS {
 		        this.ui.right.playButton.addEventListener("click", (this.onRightPlayClick = () => {
 		            if (this.ui.right.video.paused) {
 		                this.ui.right.video.play();
+		                this.speedUpRight();
 		                this.ui.right.playButton.value = "Pause";
 		            } else {
 		                this.ui.right.video.pause();
@@ -1108,11 +1126,13 @@ module WebDJS {
 		            this.ui.right.volume.value = this.ui.right.volumeSpinner.value;
 		        }));
 		        this.ui.right.speed.addEventListener("change", (this.onRightSpeedDrag = () => {
-		            this.speedUpRight(+this.ui.right.speed.value / 100);
+		            this.rightSpeed = +this.ui.right.speed.value / 100;
+		            this.speedUpRight();
 		            this.ui.right.speedSpinner.value = this.ui.right.speed.value;
 		        }));
 		        this.ui.right.speedSpinner.addEventListener("change", (this.onRightSpeedSpin = () => {
-		            this.speedUpRight(+this.ui.right.speedSpinner.value / 100);
+		            this.rightSpeed = +this.ui.right.speedSpinner.value / 100;
+		            this.speedUpRight();
 		            this.ui.right.speed.value = this.ui.right.speedSpinner.value; 
 		        }));
 		        this.ui.right.red.addEventListener("change", (this.onRightRedDrag = () => {

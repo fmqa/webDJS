@@ -485,6 +485,18 @@ var WebDJS;
             Pipeline.prototype.colorizeRight = function (red, green, blue, alpha) {
                 this.rightRGBAFilter.colorize(red, green, blue, alpha);
             };
+            Pipeline.prototype.leftConvOne = function (m) {
+                this.leftMatrixFilterOne.transform(m);
+            };
+            Pipeline.prototype.leftConvTwo = function (m) {
+                this.leftMatrixFilterTwo.transform(m);
+            };
+            Pipeline.prototype.rightConvOne = function (m) {
+                this.rightMatrixFilterOne.transform(m);
+            };
+            Pipeline.prototype.rightConvTwo = function (m) {
+                this.rightMatrixFilterTwo.transform(m);
+            };
             Pipeline.prototype.fade = function (value) {
                 this.mixer.fade(value);
             };
@@ -654,6 +666,8 @@ var WebDJS;
                 this.rightRedness = 1;
                 this.rightGreenness = 1;
                 this.rightBlueness = 1;
+                this.leftSpeed = 1;
+                this.rightSpeed = 1;
                 this.ui = ui;
                 var glContextTypes = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"];
                 for (var i = 0; i < glContextTypes.length && !this.gl; ++i) {
@@ -662,8 +676,8 @@ var WebDJS;
                 this.pipe.leftInlet(this.ui.left.video);
                 this.pipe.rightInlet(this.ui.right.video);
             }
-            Controller.prototype.speedUpLeft = function (factor) {
-                this.ui.left.video.playbackRate = factor;
+            Controller.prototype.speedUpLeft = function () {
+                this.ui.left.video.playbackRate = this.leftSpeed;
             };
             Controller.prototype.volumeLeftTo = function (percentage) {
                 this.ui.left.video.volume = percentage;
@@ -680,8 +694,8 @@ var WebDJS;
                 this.leftBlueness = percentage;
                 this.pipe.colorizeLeft(this.leftRedness, this.leftGreenness, this.leftBlueness, 1);
             };
-            Controller.prototype.speedUpRight = function (factor) {
-                this.ui.right.video.playbackRate = factor;
+            Controller.prototype.speedUpRight = function () {
+                this.ui.right.video.playbackRate = this.rightSpeed;
             };
             Controller.prototype.volumeRightTo = function (percentage) {
                 this.ui.right.video.volume = percentage;
@@ -725,6 +739,7 @@ var WebDJS;
                 this.ui.left.playButton.addEventListener("click", (this.onLeftPlayClick = function () {
                     if (_this.ui.left.video.paused) {
                         _this.ui.left.video.play();
+                        _this.speedUpLeft();
                         _this.ui.left.playButton.value = "Pause";
                     }
                     else {
@@ -768,11 +783,13 @@ var WebDJS;
                     _this.ui.left.volume.value = _this.ui.left.volumeSpinner.value;
                 }));
                 this.ui.left.speed.addEventListener("change", (this.onLeftSpeedDrag = function () {
-                    _this.speedUpLeft(+_this.ui.left.speed.value / 100);
+                    _this.leftSpeed = +_this.ui.left.speed.value / 100;
+                    _this.speedUpLeft();
                     _this.ui.left.speedSpinner.value = _this.ui.left.speed.value;
                 }));
                 this.ui.left.speedSpinner.addEventListener("change", (this.onLeftSpeedSpin = function () {
-                    _this.speedUpLeft(+_this.ui.left.speedSpinner.value / 100);
+                    _this.leftSpeed = +_this.ui.left.speedSpinner.value / 100;
+                    _this.speedUpLeft();
                     _this.ui.left.speed.value = _this.ui.left.speedSpinner.value;
                 }));
                 this.ui.left.red.addEventListener("change", (this.onLeftRedDrag = function () {
@@ -802,6 +819,7 @@ var WebDJS;
                 this.ui.right.playButton.addEventListener("click", (this.onRightPlayClick = function () {
                     if (_this.ui.right.video.paused) {
                         _this.ui.right.video.play();
+                        _this.speedUpRight();
                         _this.ui.right.playButton.value = "Pause";
                     }
                     else {
@@ -845,11 +863,13 @@ var WebDJS;
                     _this.ui.right.volume.value = _this.ui.right.volumeSpinner.value;
                 }));
                 this.ui.right.speed.addEventListener("change", (this.onRightSpeedDrag = function () {
-                    _this.speedUpRight(+_this.ui.right.speed.value / 100);
+                    _this.rightSpeed = +_this.ui.right.speed.value / 100;
+                    _this.speedUpRight();
                     _this.ui.right.speedSpinner.value = _this.ui.right.speed.value;
                 }));
                 this.ui.right.speedSpinner.addEventListener("change", (this.onRightSpeedSpin = function () {
-                    _this.speedUpRight(+_this.ui.right.speedSpinner.value / 100);
+                    _this.rightSpeed = +_this.ui.right.speedSpinner.value / 100;
+                    _this.speedUpRight();
                     _this.ui.right.speed.value = _this.ui.right.speedSpinner.value;
                 }));
                 this.ui.right.red.addEventListener("change", (this.onRightRedDrag = function () {
