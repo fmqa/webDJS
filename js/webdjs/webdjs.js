@@ -122,6 +122,8 @@ var WebDJS;
                     this.context = gl;
                 }
                 gl.viewport(0, 0, this.scn.width(), this.scn.height());
+                gl.clearColor(0, 0, 0, 1);
+                gl.clear(gl.COLOR_BUFFER_BIT);
                 this.scn.apply(gl);
                 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
                 gl.bindTexture(gl.TEXTURE_2D, this.texture);
@@ -184,6 +186,96 @@ var WebDJS;
             return Rectangle;
         })();
         VJ.Rectangle = Rectangle;
+        var AffineTransform = (function () {
+            function AffineTransform() {
+                this.vertexArray = new Rectangle();
+                this.xtranslation = 0;
+                this.ytranslation = 0;
+                this.rotation = 0;
+                this.xscale = 1;
+                this.yscale = 1;
+                this.rebind = false;
+                this.transformed = false;
+            }
+            AffineTransform.prototype.texturize = function (texture, width, height) {
+                this.texture = texture;
+                this.textureWidth = width;
+                this.textureHeight = height;
+                this.rebind = true;
+            };
+            AffineTransform.prototype.width = function () {
+                return this.textureWidth;
+            };
+            AffineTransform.prototype.height = function () {
+                return this.textureHeight;
+            };
+            AffineTransform.prototype.translate = function (x, y) {
+                this.xtranslation = x;
+                this.ytranslation = y;
+                this.transformed = true;
+            };
+            AffineTransform.prototype.rotate = function (alpha) {
+                this.rotation = alpha;
+                this.transformed = true;
+            };
+            AffineTransform.prototype.scale = function (x, y) {
+                this.xscale = x;
+                this.yscale = y;
+                this.transformed = true;
+            };
+            AffineTransform.prototype.apply = function (gl) {
+                if (gl !== this.context) {
+                    this.vertexShader = gl.createShader(gl.VERTEX_SHADER);
+                    gl.shaderSource(this.vertexShader, "attribute vec2 vxy;" + "varying vec2 txy;" + "uniform vec2 resolution;" + "uniform vec2 translation;" + "uniform vec2 rotation;" + "uniform vec2 scaling;" + "void main() {" + "   vec2 origin = vxy - (resolution / 2.0);" + "   vec2 scaled = origin * scaling;" + "   vec2 rotated = vec2(scaled.x * rotation.y + scaled.y * rotation.x," + "                       scaled.y * rotation.y - scaled.x * rotation.x);" + "   rotated = rotated + (resolution / 2.0);" + "   vec2 transformed = rotated + translation;" + "   vec2 p = transformed / resolution; " + "   gl_Position = vec4(p.x*2.0-1.0, 1.0-p.y*2.0, 0, 1);" + "   txy = vxy / resolution;" + "}");
+                    gl.compileShader(this.vertexShader);
+                    this.fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+                    gl.shaderSource(this.fragmentShader, "precision mediump float;" + "uniform sampler2D sampler;" + "varying vec2 txy;" + "void main() {" + "   vec4 texColor = texture2D(sampler, txy);" + "   gl_FragColor = texColor;" + "}");
+                    gl.compileShader(this.fragmentShader);
+                    this.shaderProgram = gl.createProgram();
+                    gl.attachShader(this.shaderProgram, this.vertexShader);
+                    gl.attachShader(this.shaderProgram, this.fragmentShader);
+                    gl.linkProgram(this.shaderProgram);
+                    gl.useProgram(this.shaderProgram);
+                    this.xyLocation = gl.getAttribLocation(this.shaderProgram, "vxy");
+                    gl.enableVertexAttribArray(this.xyLocation);
+                    this.resolutionLocation = gl.getUniformLocation(this.shaderProgram, "resolution");
+                    gl.uniform2f(this.resolutionLocation, this.textureWidth, this.textureHeight);
+                    this.translationLocation = gl.getUniformLocation(this.shaderProgram, "translation");
+                    gl.uniform2f(this.translationLocation, 0, 0);
+                    this.rotationLocation = gl.getUniformLocation(this.shaderProgram, "rotation");
+                    gl.uniform2f(this.rotationLocation, Math.sin(0), Math.cos(0));
+                    this.scalingLocation = gl.getUniformLocation(this.shaderProgram, "scaling");
+                    gl.uniform2f(this.scalingLocation, 1, 1);
+                    this.samplerLocation = gl.getUniformLocation(this.shaderProgram, "sampler");
+                    gl.uniform1i(this.samplerLocation, 0);
+                    this.vertexBuffer = gl.createBuffer();
+                    this.indexBuffer = gl.createBuffer();
+                    this.vertexArray.resize(this.textureWidth, this.textureHeight);
+                    this.vertexArray.bind(this.vertexBuffer, this.indexBuffer);
+                }
+                if (this.rebind || gl !== this.context) {
+                    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+                    this.rebind = false;
+                }
+                this.vertexArray.apply(gl);
+                gl.useProgram(this.shaderProgram);
+                if (this.transformed) {
+                    gl.uniform2f(this.translationLocation, this.xtranslation, this.ytranslation);
+                    gl.uniform2f(this.rotationLocation, Math.sin(this.rotation), Math.cos(this.rotation));
+                    gl.uniform2f(this.scalingLocation, this.xscale, this.yscale);
+                    this.transformed = false;
+                }
+                if (gl !== this.context) {
+                    this.context = gl;
+                }
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+                gl.vertexAttribPointer(this.xyLocation, 2, gl.FLOAT, false, 0, 0);
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+                gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+            };
+            return AffineTransform;
+        })();
+        VJ.AffineTransform = AffineTransform;
         /**
          * Simple Renderer - Render HTML Image/Video to GL context.
          */
@@ -453,6 +545,8 @@ var WebDJS;
         var Pipeline = (function () {
             function Pipeline() {
                 this.leftVideoSupplier = new VideoSupplier();
+                this.leftAffineTransform = new AffineTransform();
+                this.leftFBOConnectorZero = new FramebufferSupplier();
                 this.leftMatrixFilterOne = new Convolver();
                 this.leftFBOConnectorOne = new FramebufferSupplier();
                 this.leftMatrixFilterTwo = new Convolver();
@@ -460,6 +554,8 @@ var WebDJS;
                 this.leftRGBAFilter = new Simple();
                 this.leftFBOConnectorThree = new FramebufferSupplier();
                 this.rightVideoSupplier = new VideoSupplier();
+                this.rightAffineTransform = new AffineTransform();
+                this.rightFBOConnectorZero = new FramebufferSupplier();
                 this.rightMatrixFilterOne = new Convolver();
                 this.rightFBOConnectorOne = new FramebufferSupplier();
                 this.rightMatrixFilterTwo = new Convolver();
@@ -469,8 +565,8 @@ var WebDJS;
                 this.mixer = new Mixer();
                 this.leftUpdate = false;
                 this.rightUpdate = false;
-                this.leftRGBAFilter.flipy(-1);
-                this.rightRGBAFilter.flipy(-1);
+                //this.leftRGBAFilter.flipy(-1);
+                //this.rightRGBAFilter.flipy(-1);
                 this.mixer.fade(0.5);
             }
             Pipeline.prototype.leftInlet = function (l) {
@@ -484,6 +580,24 @@ var WebDJS;
             };
             Pipeline.prototype.colorizeRight = function (red, green, blue, alpha) {
                 this.rightRGBAFilter.colorize(red, green, blue, alpha);
+            };
+            Pipeline.prototype.scaleLeft = function (x, y) {
+                this.leftAffineTransform.scale(x, y);
+            };
+            Pipeline.prototype.scaleRight = function (x, y) {
+                this.rightAffineTransform.scale(x, y);
+            };
+            Pipeline.prototype.translateLeft = function (x, y) {
+                this.leftAffineTransform.translate(x, y);
+            };
+            Pipeline.prototype.translateRight = function (x, y) {
+                this.rightAffineTransform.translate(x, y);
+            };
+            Pipeline.prototype.rotateLeft = function (alpha) {
+                this.leftAffineTransform.rotate(alpha);
+            };
+            Pipeline.prototype.rotateRight = function (alpha) {
+                this.rightAffineTransform.rotate(alpha);
             };
             Pipeline.prototype.leftConvOne = function (m) {
                 this.leftMatrixFilterOne.transform(m);
@@ -515,6 +629,15 @@ var WebDJS;
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                     this.leftVideoSupplier.bind(this.leftVideoSupplierTex);
+                    this.leftFBOConnectorZeroTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.leftFBOConnectorZeroTex);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.leftFBOConnectorZero.bind(this.leftFBOConnectorZeroTex);
+                    this.leftFBOZero = gl.createFramebuffer();
+                    this.leftFBOConnectorZero.framebuffer(this.leftFBOZero);
                     this.leftFBOConnectorOneTex = gl.createTexture();
                     gl.bindTexture(gl.TEXTURE_2D, this.leftFBOConnectorOneTex);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -543,7 +666,9 @@ var WebDJS;
                     this.leftFBOThree = gl.createFramebuffer();
                     this.leftFBOConnectorThree.framebuffer(this.leftFBOThree);
                     // Build left scene graph
-                    this.leftVideoSupplier.register(this.leftMatrixFilterOne);
+                    this.leftVideoSupplier.register(this.leftAffineTransform);
+                    this.leftFBOConnectorZero.inlet(this.leftAffineTransform);
+                    this.leftFBOConnectorZero.register(this.leftMatrixFilterOne);
                     this.leftFBOConnectorOne.inlet(this.leftMatrixFilterOne);
                     this.leftFBOConnectorOne.register(this.leftMatrixFilterTwo);
                     this.leftFBOConnectorTwo.inlet(this.leftMatrixFilterTwo);
@@ -557,6 +682,15 @@ var WebDJS;
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                     this.rightVideoSupplier.bind(this.rightVideoSupplierTex);
+                    this.rightFBOConnectorZeroTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.rightFBOConnectorZeroTex);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.rightFBOConnectorZero.bind(this.rightFBOConnectorZeroTex);
+                    this.rightFBOZero = gl.createFramebuffer();
+                    this.rightFBOConnectorZero.framebuffer(this.rightFBOZero);
                     this.rightFBOConnectorOneTex = gl.createTexture();
                     gl.bindTexture(gl.TEXTURE_2D, this.rightFBOConnectorOneTex);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -585,7 +719,9 @@ var WebDJS;
                     this.rightFBOThree = gl.createFramebuffer();
                     this.rightFBOConnectorThree.framebuffer(this.rightFBOThree);
                     // Build right scene graph
-                    this.rightVideoSupplier.register(this.rightMatrixFilterOne);
+                    this.rightVideoSupplier.register(this.rightAffineTransform);
+                    this.rightFBOConnectorZero.inlet(this.rightAffineTransform);
+                    this.rightFBOConnectorZero.register(this.rightMatrixFilterOne);
                     this.rightFBOConnectorOne.inlet(this.rightMatrixFilterOne);
                     this.rightFBOConnectorOne.register(this.rightMatrixFilterTwo);
                     this.rightFBOConnectorTwo.inlet(this.rightMatrixFilterTwo);
@@ -596,6 +732,7 @@ var WebDJS;
                 if (this.leftUpdate) {
                     this.leftVideoSupplier.reload();
                     this.leftVideoSupplier.apply(gl);
+                    this.leftFBOConnectorZero.apply(gl);
                     this.leftFBOConnectorOne.apply(gl);
                     this.leftFBOConnectorTwo.apply(gl);
                     this.leftFBOConnectorThree.apply(gl);
@@ -604,6 +741,7 @@ var WebDJS;
                 if (this.rightUpdate) {
                     this.rightVideoSupplier.reload();
                     this.rightVideoSupplier.apply(gl);
+                    this.rightFBOConnectorZero.apply(gl);
                     this.rightFBOConnectorOne.apply(gl);
                     this.rightFBOConnectorTwo.apply(gl);
                     this.rightFBOConnectorThree.apply(gl);
@@ -660,6 +798,12 @@ var WebDJS;
                 this.onLeftGreenSpin = null;
                 this.onLeftBlueDrag = null;
                 this.onLeftBlueSpin = null;
+                this.onLeftRotDrag = null;
+                this.onLeftRotSpin = null;
+                this.onLeftTranslationXSpin = null;
+                this.onLeftTranslationYSpin = null;
+                this.onLeftScaleDrag = null;
+                this.onLeftScaleSpin = null;
                 this.onLeftMatrixOneChange = null;
                 this.onLeftMatrixTwoChange = null;
                 this.onRightPlayClick = null;
@@ -679,6 +823,12 @@ var WebDJS;
                 this.onRightGreenSpin = null;
                 this.onRightBlueDrag = null;
                 this.onRightBlueSpin = null;
+                this.onRightRotDrag = null;
+                this.onRightRotSpin = null;
+                this.onRightTranslationXSpin = null;
+                this.onRightTranslationYSpin = null;
+                this.onRightScaleDrag = null;
+                this.onRightScaleSpin = null;
                 this.onRightMatrixOneChange = null;
                 this.onRightMatrixTwoChange = null;
                 this.onFaderDrag = null;
@@ -690,6 +840,10 @@ var WebDJS;
                 this.rightBlueness = 1;
                 this.leftSpeed = 1;
                 this.rightSpeed = 1;
+                this.leftTranslationX = 0;
+                this.leftTranslationY = 0;
+                this.rightTranslationX = 0;
+                this.rightTranslationY = 0;
                 this.ui = ui;
                 var glContextTypes = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"];
                 for (var i = 0; i < glContextTypes.length && !this.gl; ++i) {
@@ -715,6 +869,18 @@ var WebDJS;
             Controller.prototype.leftBluenessTo = function (percentage) {
                 this.leftBlueness = percentage;
                 this.pipe.colorizeLeft(this.leftRedness, this.leftGreenness, this.leftBlueness, 1);
+            };
+            Controller.prototype.leftRotationTo = function (degrees) {
+                this.pipe.rotateLeft(degrees * Math.PI / 180);
+            };
+            Controller.prototype.rightRotationTo = function (degrees) {
+                this.pipe.rotateRight(degrees * Math.PI / 180);
+            };
+            Controller.prototype.updateTranslationLeft = function () {
+                this.pipe.translateLeft(this.leftTranslationX, this.leftTranslationY);
+            };
+            Controller.prototype.updateTranslationRight = function () {
+                this.pipe.translateRight(this.rightTranslationX, this.rightTranslationY);
             };
             Controller.prototype.speedUpRight = function () {
                 this.ui.right.video.playbackRate = this.rightSpeed;
@@ -841,6 +1007,30 @@ var WebDJS;
                     _this.leftBluenessTo(+_this.ui.left.blue.value / 255);
                     _this.ui.left.blue.value = _this.ui.left.blueSpinner.value;
                 }));
+                this.ui.left.rotation.addEventListener("change", (this.onLeftRotDrag = function () {
+                    _this.leftRotationTo(+_this.ui.left.rotation.value);
+                    _this.ui.left.rotationSpinner.value = _this.ui.left.rotation.value;
+                }));
+                this.ui.left.rotationSpinner.addEventListener("change", (this.onLeftRotSpin = function () {
+                    _this.leftRotationTo(+_this.ui.left.rotation.value);
+                    _this.ui.left.rotation.value = _this.ui.left.rotationSpinner.value;
+                }));
+                this.ui.left.translationXSpinner.addEventListener("change", (this.onLeftTranslationXSpin = function () {
+                    _this.leftTranslationX = +_this.ui.left.translationXSpinner.value;
+                    _this.updateTranslationLeft();
+                }));
+                this.ui.left.translationYSpinner.addEventListener("change", (this.onLeftTranslationYSpin = function () {
+                    _this.leftTranslationY = +_this.ui.left.translationYSpinner.value;
+                    _this.updateTranslationLeft();
+                }));
+                this.ui.left.scale.addEventListener("change", (this.onLeftScaleDrag = function () {
+                    _this.pipe.scaleLeft(+_this.ui.left.scale.value / 100, +_this.ui.left.scale.value / 100);
+                    _this.ui.left.scaleSpinner.value = _this.ui.left.scale.value;
+                }));
+                this.ui.left.scaleSpinner.addEventListener("change", (this.onLeftScaleSpin = function () {
+                    _this.pipe.scaleLeft(+_this.ui.left.scale.value / 100, +_this.ui.left.scale.value / 100);
+                    _this.ui.left.scale.value = _this.ui.left.scaleSpinner.value;
+                }));
                 this.ui.left.filterOne.addEventListener("change", (this.onLeftMatrixOneChange = function () {
                     _this.pipe.leftConvOne(kernels[_this.ui.left.filterOne.value]);
                 }));
@@ -929,6 +1119,30 @@ var WebDJS;
                 this.ui.right.blueSpinner.addEventListener("change", (this.onRightBlueSpin = function () {
                     _this.rightBluenessTo(+_this.ui.right.blue.value / 255);
                     _this.ui.right.blue.value = _this.ui.right.blueSpinner.value;
+                }));
+                this.ui.right.rotation.addEventListener("change", (this.onRightRotDrag = function () {
+                    _this.rightRotationTo(+_this.ui.right.rotation.value);
+                    _this.ui.right.rotationSpinner.value = _this.ui.right.rotation.value;
+                }));
+                this.ui.right.rotationSpinner.addEventListener("change", (this.onRightRotSpin = function () {
+                    _this.rightRotationTo(+_this.ui.right.rotation.value);
+                    _this.ui.right.rotation.value = _this.ui.right.rotationSpinner.value;
+                }));
+                this.ui.right.translationXSpinner.addEventListener("change", (this.onRightTranslationXSpin = function () {
+                    _this.rightTranslationX = +_this.ui.right.translationXSpinner.value;
+                    _this.updateTranslationRight();
+                }));
+                this.ui.right.translationYSpinner.addEventListener("change", (this.onRightTranslationYSpin = function () {
+                    _this.rightTranslationY = +_this.ui.right.translationYSpinner.value;
+                    _this.updateTranslationRight();
+                }));
+                this.ui.right.scale.addEventListener("change", (this.onRightScaleDrag = function () {
+                    _this.pipe.scaleRight(+_this.ui.right.scale.value / 100, +_this.ui.right.scale.value / 100);
+                    _this.ui.right.scaleSpinner.value = _this.ui.right.scale.value;
+                }));
+                this.ui.right.scaleSpinner.addEventListener("change", (this.onRightScaleSpin = function () {
+                    _this.pipe.scaleRight(+_this.ui.right.scale.value / 100, +_this.ui.right.scale.value / 100);
+                    _this.ui.right.scale.value = _this.ui.right.scaleSpinner.value;
                 }));
                 this.ui.right.filterOne.addEventListener("change", (this.onRightMatrixOneChange = function () {
                     _this.pipe.rightConvOne(kernels[_this.ui.right.filterOne.value]);

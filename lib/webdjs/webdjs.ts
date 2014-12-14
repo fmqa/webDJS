@@ -155,6 +155,8 @@ module WebDJS {
 	                this.context = gl;
 	            }
 	            gl.viewport(0, 0, this.scn.width(), this.scn.height());
+	            gl.clearColor(0, 0, 0, 1);
+	            gl.clear(gl.COLOR_BUFFER_BIT);
 	            this.scn.apply(gl);
 	            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	            gl.bindTexture(gl.TEXTURE_2D, this.texture);
@@ -219,6 +221,148 @@ module WebDJS {
     			    this.context = gl;
     			}
 		    }
+	    }
+	    
+	    export class AffineTransform implements Scene, Consumer {
+	        private context : WebGLRenderingContext;
+    	    private vertexShader : WebGLShader;
+            private fragmentShader : WebGLShader;
+            private shaderProgram : WebGLProgram;
+            private texture : WebGLTexture;
+            private textureWidth : number;
+            private textureHeight : number;
+            private xyLocation : number;
+            private samplerLocation : WebGLUniformLocation;
+            private resolutionLocation : WebGLUniformLocation;
+            private rotationLocation : WebGLUniformLocation;
+            private translationLocation : WebGLUniformLocation;
+            private scalingLocation : WebGLUniformLocation;
+            private vertexBuffer : WebGLBuffer;
+            private indexBuffer : WebGLBuffer;
+            private vertexArray : Rectangle = new Rectangle();
+            private xtranslation : number = 0;
+            private ytranslation : number = 0;
+            private rotation : number = 0;
+            private xscale : number = 1;
+            private yscale : number = 1;
+            private rebind : boolean = false;
+            private transformed : boolean = false;
+            texturize(texture : WebGLTexture, width : number, height : number) : void {
+                this.texture = texture;
+                this.textureWidth = width;
+                this.textureHeight = height;
+                this.rebind = true;
+            }
+            width() : number {
+                return this.textureWidth;
+            }
+            height() : number {
+                return this.textureHeight;
+            }
+            translate(x : number, y : number) : void {
+                this.xtranslation = x;
+                this.ytranslation = y;
+                this.transformed = true;
+            }
+            rotate(alpha : number) : void {
+                this.rotation = alpha;
+                this.transformed = true;
+            }
+            scale(x : number, y : number) : void {
+                this.xscale = x;
+                this.yscale = y;
+                this.transformed = true;
+            }
+            apply(gl : WebGLRenderingContext) : void {
+                if (gl !== this.context) {
+                     this.vertexShader = gl.createShader(gl.VERTEX_SHADER);
+                    gl.shaderSource(this.vertexShader, 
+                        "attribute vec2 vxy;" +
+                        "varying vec2 txy;" +
+                        "uniform vec2 resolution;" +
+                        "uniform vec2 translation;" +
+                        "uniform vec2 rotation;" +
+                        "uniform vec2 scaling;" +
+                        "void main() {" +
+                        "   vec2 origin = vxy - (resolution / 2.0);" +
+                        "   vec2 scaled = origin * scaling;" +
+                        "   vec2 rotated = vec2(scaled.x * rotation.y + scaled.y * rotation.x," +
+                        "                       scaled.y * rotation.y - scaled.x * rotation.x);" +
+                        "   rotated = rotated + (resolution / 2.0);" +
+                        "   vec2 transformed = rotated + translation;" +
+                        "   vec2 p = transformed / resolution; " +
+                        "   gl_Position = vec4(p.x*2.0-1.0, 1.0-p.y*2.0, 0, 1);" +
+                        "   txy = vxy / resolution;" +
+                        "}");
+                    gl.compileShader(this.vertexShader);
+                    
+                    this.fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+                    gl.shaderSource(this.fragmentShader,
+                        "precision mediump float;" +
+                        "uniform sampler2D sampler;" +
+                        "varying vec2 txy;" +
+                        "void main() {" +
+                        "   vec4 texColor = texture2D(sampler, txy);" +
+                        "   gl_FragColor = texColor;" +
+                        "}");
+                    gl.compileShader(this.fragmentShader);
+
+                    this.shaderProgram = gl.createProgram();
+                    gl.attachShader(this.shaderProgram, this.vertexShader);
+                    gl.attachShader(this.shaderProgram, this.fragmentShader);
+                    gl.linkProgram(this.shaderProgram);
+                    gl.useProgram(this.shaderProgram);
+
+                    this.xyLocation = gl.getAttribLocation(this.shaderProgram, "vxy");
+                    gl.enableVertexAttribArray(this.xyLocation);
+                    
+                    this.resolutionLocation = gl.getUniformLocation(this.shaderProgram, "resolution");
+                    gl.uniform2f(this.resolutionLocation, this.textureWidth, this.textureHeight);
+                    
+                    this.translationLocation = gl.getUniformLocation(this.shaderProgram, "translation");
+                    gl.uniform2f(this.translationLocation, 0, 0);
+                    
+                    this.rotationLocation = gl.getUniformLocation(this.shaderProgram, "rotation");
+                    gl.uniform2f(this.rotationLocation, Math.sin(0), Math.cos(0));
+                    
+                    this.scalingLocation = gl.getUniformLocation(this.shaderProgram, "scaling");
+                    gl.uniform2f(this.scalingLocation, 1, 1);
+                    
+                    this.samplerLocation = gl.getUniformLocation(this.shaderProgram, "sampler");
+                    gl.uniform1i(this.samplerLocation, 0);
+                    
+                    this.vertexBuffer = gl.createBuffer();
+                    this.indexBuffer = gl.createBuffer();
+                    this.vertexArray.resize(this.textureWidth, this.textureHeight);
+                    this.vertexArray.bind(this.vertexBuffer, this.indexBuffer);
+                }
+                
+                if (this.rebind || gl !== this.context) {
+                    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+                    this.rebind = false;
+                }
+                
+                this.vertexArray.apply(gl);
+                
+                gl.useProgram(this.shaderProgram);
+                
+                if (this.transformed) {
+                    gl.uniform2f(this.translationLocation, this.xtranslation, this.ytranslation);
+                    gl.uniform2f(this.rotationLocation, Math.sin(this.rotation), Math.cos(this.rotation));
+                    gl.uniform2f(this.scalingLocation, this.xscale, this.yscale);
+                    this.transformed = false;
+                }
+                
+                if (gl !== this.context) {
+                    this.context = gl;
+                }
+                
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+                gl.vertexAttribPointer(this.xyLocation, 2, gl.FLOAT, false, 0, 0);
+                
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+                gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+            }
 	    }
 		
 		/**
@@ -656,6 +800,12 @@ module WebDJS {
 	        greenSpinner : HTMLInputElement;
 	        blue : HTMLInputElement;
 	        blueSpinner : HTMLInputElement;
+	        rotation : HTMLInputElement;
+	        rotationSpinner : HTMLInputElement;
+	        translationXSpinner : HTMLInputElement;
+	        translationYSpinner : HTMLInputElement;
+	        scale : HTMLInputElement;
+	        scaleSpinner : HTMLInputElement;
 	        playingTime : HTMLInputElement;
 	        filterOne : HTMLSelectElement;
 	        filterTwo : HTMLSelectElement;
@@ -677,6 +827,10 @@ module WebDJS {
             
             private leftVideoSupplierTex : WebGLTexture;
             private leftVideoSupplier : VideoSupplier = new VideoSupplier();
+            private leftAffineTransform : AffineTransform = new AffineTransform();
+            private leftFBOZero : WebGLFramebuffer;
+            private leftFBOConnectorZeroTex : WebGLTexture;
+            private leftFBOConnectorZero : FramebufferSupplier = new FramebufferSupplier();
             private leftMatrixFilterOne : Convolver = new Convolver();
             private leftFBOOne : WebGLFramebuffer;
             private leftFBOConnectorOneTex : WebGLTexture;
@@ -692,6 +846,10 @@ module WebDJS {
             
             private rightVideoSupplierTex : WebGLTexture;
             private rightVideoSupplier : VideoSupplier = new VideoSupplier();
+            private rightAffineTransform : AffineTransform = new AffineTransform();
+            private rightFBOZero : WebGLFramebuffer;
+            private rightFBOConnectorZeroTex : WebGLTexture;
+            private rightFBOConnectorZero : FramebufferSupplier = new FramebufferSupplier();
             private rightMatrixFilterOne : Convolver = new Convolver();
             private rightFBOOne : WebGLFramebuffer;
             private rightFBOConnectorOneTex : WebGLTexture;
@@ -708,8 +866,8 @@ module WebDJS {
             private leftUpdate : boolean = false;
             private rightUpdate : boolean = false;
             constructor() {
-                this.leftRGBAFilter.flipy(-1);
-                this.rightRGBAFilter.flipy(-1);
+                //this.leftRGBAFilter.flipy(-1);
+                //this.rightRGBAFilter.flipy(-1);
                 this.mixer.fade(0.5);
             }
             leftInlet(l : HTMLVideoElement) : void {
@@ -723,6 +881,24 @@ module WebDJS {
             }
             colorizeRight(red : number, green : number, blue : number, alpha : number) : void {
                 this.rightRGBAFilter.colorize(red, green, blue, alpha);
+            }
+            scaleLeft(x : number, y : number) : void {
+                this.leftAffineTransform.scale(x, y);
+            }
+            scaleRight(x : number, y : number) : void {
+                this.rightAffineTransform.scale(x, y);
+            }
+            translateLeft(x : number, y : number) : void {
+                this.leftAffineTransform.translate(x, y);
+            }
+            translateRight(x : number, y : number) : void {
+                this.rightAffineTransform.translate(x, y);
+            }
+            rotateLeft(alpha : number) : void {
+                this.leftAffineTransform.rotate(alpha);
+            }
+            rotateRight(alpha : number) : void {
+                this.rightAffineTransform.rotate(alpha);
             }
             leftConvOne(m : Float32Array) : void {
                 this.leftMatrixFilterOne.transform(m);
@@ -755,6 +931,16 @@ module WebDJS {
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                     this.leftVideoSupplier.bind(this.leftVideoSupplierTex);
                     
+                    this.leftFBOConnectorZeroTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.leftFBOConnectorZeroTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.leftFBOConnectorZero.bind(this.leftFBOConnectorZeroTex);
+                    this.leftFBOZero = gl.createFramebuffer();
+                    this.leftFBOConnectorZero.framebuffer(this.leftFBOZero);
+                    
                     this.leftFBOConnectorOneTex = gl.createTexture();
                     gl.bindTexture(gl.TEXTURE_2D, this.leftFBOConnectorOneTex);        
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -786,17 +972,20 @@ module WebDJS {
                     this.leftFBOConnectorThree.framebuffer(this.leftFBOThree);
                     
                     // Build left scene graph
-                    this.leftVideoSupplier.register(this.leftMatrixFilterOne);
+                    this.leftVideoSupplier.register(this.leftAffineTransform);
+                    
+                    this.leftFBOConnectorZero.inlet(this.leftAffineTransform);
+                    this.leftFBOConnectorZero.register(this.leftMatrixFilterOne);
                     
                     this.leftFBOConnectorOne.inlet(this.leftMatrixFilterOne);
                     this.leftFBOConnectorOne.register(this.leftMatrixFilterTwo);
-                    
+
                     this.leftFBOConnectorTwo.inlet(this.leftMatrixFilterTwo);
                     this.leftFBOConnectorTwo.register(this.leftRGBAFilter);
-                    
+
                     this.leftFBOConnectorThree.inlet(this.leftRGBAFilter);
                     this.leftFBOConnectorThree.register(this.mixer.left());
-                    
+
                     this.rightVideoSupplierTex = gl.createTexture();
                     gl.bindTexture(gl.TEXTURE_2D, this.rightVideoSupplierTex);        
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -804,6 +993,16 @@ module WebDJS {
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                     this.rightVideoSupplier.bind(this.rightVideoSupplierTex);
+                    
+                    this.rightFBOConnectorZeroTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.rightFBOConnectorZeroTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.rightFBOConnectorZero.bind(this.rightFBOConnectorZeroTex);
+                    this.rightFBOZero = gl.createFramebuffer();
+                    this.rightFBOConnectorZero.framebuffer(this.rightFBOZero);
                     
                     this.rightFBOConnectorOneTex = gl.createTexture();
                     gl.bindTexture(gl.TEXTURE_2D, this.rightFBOConnectorOneTex);        
@@ -836,7 +1035,10 @@ module WebDJS {
                     this.rightFBOConnectorThree.framebuffer(this.rightFBOThree);
                     
                     // Build right scene graph
-                    this.rightVideoSupplier.register(this.rightMatrixFilterOne);
+                    this.rightVideoSupplier.register(this.rightAffineTransform);
+                    
+                    this.rightFBOConnectorZero.inlet(this.rightAffineTransform);
+                    this.rightFBOConnectorZero.register(this.rightMatrixFilterOne);
                     
                     this.rightFBOConnectorOne.inlet(this.rightMatrixFilterOne);
                     this.rightFBOConnectorOne.register(this.rightMatrixFilterTwo);
@@ -851,6 +1053,7 @@ module WebDJS {
                 if (this.leftUpdate) {
                     this.leftVideoSupplier.reload();
                     this.leftVideoSupplier.apply(gl);
+                    this.leftFBOConnectorZero.apply(gl);
                     this.leftFBOConnectorOne.apply(gl);
                     this.leftFBOConnectorTwo.apply(gl);
                     this.leftFBOConnectorThree.apply(gl);
@@ -860,6 +1063,7 @@ module WebDJS {
                 if (this.rightUpdate) {
                     this.rightVideoSupplier.reload();
                     this.rightVideoSupplier.apply(gl);
+                    this.rightFBOConnectorZero.apply(gl);
                     this.rightFBOConnectorOne.apply(gl);
                     this.rightFBOConnectorTwo.apply(gl);
                     this.rightFBOConnectorThree.apply(gl);
@@ -918,6 +1122,12 @@ module WebDJS {
 		    private onLeftGreenSpin : () => void = null;
 		    private onLeftBlueDrag : () => void = null;
 		    private onLeftBlueSpin : () => void = null;
+		    private onLeftRotDrag : () => void = null;
+		    private onLeftRotSpin : () => void = null;
+		    private onLeftTranslationXSpin : () => void = null;
+		    private onLeftTranslationYSpin : () => void = null;
+		    private onLeftScaleDrag : () => void = null;
+		    private onLeftScaleSpin : () => void = null;
 		    private onLeftMatrixOneChange : () => void = null;
 		    private onLeftMatrixTwoChange : () => void = null;
 		    private onRightPlayClick : () => void = null;
@@ -937,6 +1147,12 @@ module WebDJS {
 		    private onRightGreenSpin : () => void = null;
 		    private onRightBlueDrag : () => void = null;
 		    private onRightBlueSpin : () => void = null;
+		    private onRightRotDrag : () => void = null;
+		    private onRightRotSpin : () => void = null;
+		    private onRightTranslationXSpin : () => void = null;
+		    private onRightTranslationYSpin : () => void = null;
+		    private onRightScaleDrag : () => void = null;
+		    private onRightScaleSpin : () => void = null;
 		    private onRightMatrixOneChange : () => void = null;
 		    private onRightMatrixTwoChange : () => void = null;
 		    private onFaderDrag : () => void = null;
@@ -948,6 +1164,10 @@ module WebDJS {
 		    private rightBlueness : number = 1;
 		    private leftSpeed : number = 1;
 		    private rightSpeed : number = 1;
+		    private leftTranslationX : number = 0;
+		    private leftTranslationY : number = 0;
+		    private rightTranslationX : number = 0;
+		    private rightTranslationY : number = 0;
 		    constructor(ui : UI) {
 		        this.ui = ui;
 		        var glContextTypes : string[] = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"];
@@ -974,6 +1194,18 @@ module WebDJS {
 		    leftBluenessTo(percentage : number) : void {
 		        this.leftBlueness = percentage;
 		        this.pipe.colorizeLeft(this.leftRedness, this.leftGreenness, this.leftBlueness, 1);
+		    }
+		    leftRotationTo(degrees : number) : void {
+		        this.pipe.rotateLeft(degrees * Math.PI / 180);
+		    }
+		    rightRotationTo(degrees : number) : void {
+		        this.pipe.rotateRight(degrees * Math.PI / 180);
+		    }
+		    updateTranslationLeft() : void {
+		        this.pipe.translateLeft(this.leftTranslationX, this.leftTranslationY);
+		    }
+		    updateTranslationRight() : void {
+		        this.pipe.translateRight(this.rightTranslationX, this.rightTranslationY);
 		    }
 		    speedUpRight() : void {
 		        this.ui.right.video.playbackRate = this.rightSpeed;
@@ -1100,6 +1332,30 @@ module WebDJS {
 		            this.leftBluenessTo(+this.ui.left.blue.value / 255);
 		            this.ui.left.blue.value = this.ui.left.blueSpinner.value;
 		        }));
+		        this.ui.left.rotation.addEventListener("change", (this.onLeftRotDrag = () => {
+		            this.leftRotationTo(+this.ui.left.rotation.value);
+		            this.ui.left.rotationSpinner.value = this.ui.left.rotation.value;
+		        }));
+		        this.ui.left.rotationSpinner.addEventListener("change", (this.onLeftRotSpin = () => {
+		            this.leftRotationTo(+this.ui.left.rotation.value);
+		            this.ui.left.rotation.value = this.ui.left.rotationSpinner.value;
+		        }));
+		        this.ui.left.translationXSpinner.addEventListener("change", (this.onLeftTranslationXSpin = () => {
+		            this.leftTranslationX = +this.ui.left.translationXSpinner.value;
+		            this.updateTranslationLeft();
+		        }));
+		        this.ui.left.translationYSpinner.addEventListener("change", (this.onLeftTranslationYSpin = () => {
+		            this.leftTranslationY = +this.ui.left.translationYSpinner.value;
+		            this.updateTranslationLeft();
+		        }));
+		        this.ui.left.scale.addEventListener("change", (this.onLeftScaleDrag = () => {
+		            this.pipe.scaleLeft(+this.ui.left.scale.value / 100, +this.ui.left.scale.value / 100);
+		            this.ui.left.scaleSpinner.value = this.ui.left.scale.value;
+		        }));
+		        this.ui.left.scaleSpinner.addEventListener("change", (this.onLeftScaleSpin = () => {
+		            this.pipe.scaleLeft(+this.ui.left.scale.value / 100, +this.ui.left.scale.value / 100);
+		            this.ui.left.scale.value = this.ui.left.scaleSpinner.value;
+		        }));
 		        this.ui.left.filterOne.addEventListener("change", (this.onLeftMatrixOneChange = () => {
 		            this.pipe.leftConvOne(kernels[this.ui.left.filterOne.value]);
 		        }));
@@ -1193,6 +1449,30 @@ module WebDJS {
 		        this.ui.right.blueSpinner.addEventListener("change", (this.onRightBlueSpin = () => {
 		            this.rightBluenessTo(+this.ui.right.blue.value / 255);
 		            this.ui.right.blue.value = this.ui.right.blueSpinner.value;
+		        }));
+		        this.ui.right.rotation.addEventListener("change", (this.onRightRotDrag = () => {
+		            this.rightRotationTo(+this.ui.right.rotation.value);
+		            this.ui.right.rotationSpinner.value = this.ui.right.rotation.value;
+		        }));
+		        this.ui.right.rotationSpinner.addEventListener("change", (this.onRightRotSpin = () => {
+		            this.rightRotationTo(+this.ui.right.rotation.value);
+		            this.ui.right.rotation.value = this.ui.right.rotationSpinner.value;
+		        }));
+		        this.ui.right.translationXSpinner.addEventListener("change", (this.onRightTranslationXSpin = () => {
+		            this.rightTranslationX = +this.ui.right.translationXSpinner.value;
+		            this.updateTranslationRight();
+		        }));
+		        this.ui.right.translationYSpinner.addEventListener("change", (this.onRightTranslationYSpin = () => {
+		            this.rightTranslationY = +this.ui.right.translationYSpinner.value;
+		            this.updateTranslationRight();
+		        }));
+		        this.ui.right.scale.addEventListener("change", (this.onRightScaleDrag = () => {
+		            this.pipe.scaleRight(+this.ui.right.scale.value / 100, +this.ui.right.scale.value / 100);
+		            this.ui.right.scaleSpinner.value = this.ui.right.scale.value;
+		        }));
+		        this.ui.right.scaleSpinner.addEventListener("change", (this.onRightScaleSpin = () => {
+		            this.pipe.scaleRight(+this.ui.right.scale.value / 100, +this.ui.right.scale.value / 100);
+		            this.ui.right.scale.value = this.ui.right.scaleSpinner.value;
 		        }));
 		        this.ui.right.filterOne.addEventListener("change", (this.onRightMatrixOneChange = () => {
 		            this.pipe.rightConvOne(kernels[this.ui.right.filterOne.value]);
