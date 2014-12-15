@@ -827,10 +827,6 @@ module WebDJS {
             
             private leftVideoSupplierTex : WebGLTexture;
             private leftVideoSupplier : VideoSupplier = new VideoSupplier();
-            private leftAffineTransform : AffineTransform = new AffineTransform();
-            private leftFBOZero : WebGLFramebuffer;
-            private leftFBOConnectorZeroTex : WebGLTexture;
-            private leftFBOConnectorZero : FramebufferSupplier = new FramebufferSupplier();
             private leftMatrixFilterOne : Convolver = new Convolver();
             private leftFBOOne : WebGLFramebuffer;
             private leftFBOConnectorOneTex : WebGLTexture;
@@ -843,13 +839,13 @@ module WebDJS {
             private leftFBOThree : WebGLFramebuffer;
             private leftFBOConnectorThreeTex : WebGLTexture;
             private leftFBOConnectorThree : FramebufferSupplier = new FramebufferSupplier();
+            private leftAffineTransform : AffineTransform = new AffineTransform();
+            private leftFBOFour : WebGLFramebuffer;
+            private leftFBOConnectorFourTex : WebGLTexture;
+            private leftFBOConnectorFour : FramebufferSupplier = new FramebufferSupplier();
             
             private rightVideoSupplierTex : WebGLTexture;
             private rightVideoSupplier : VideoSupplier = new VideoSupplier();
-            private rightAffineTransform : AffineTransform = new AffineTransform();
-            private rightFBOZero : WebGLFramebuffer;
-            private rightFBOConnectorZeroTex : WebGLTexture;
-            private rightFBOConnectorZero : FramebufferSupplier = new FramebufferSupplier();
             private rightMatrixFilterOne : Convolver = new Convolver();
             private rightFBOOne : WebGLFramebuffer;
             private rightFBOConnectorOneTex : WebGLTexture;
@@ -862,6 +858,10 @@ module WebDJS {
             private rightFBOThree : WebGLFramebuffer;
             private rightFBOConnectorThreeTex : WebGLTexture;
             private rightFBOConnectorThree : FramebufferSupplier = new FramebufferSupplier();
+            private rightAffineTransform : AffineTransform = new AffineTransform();
+            private rightFBOFour : WebGLFramebuffer;
+            private rightFBOConnectorFourTex : WebGLTexture;
+            private rightFBOConnectorFour : FramebufferSupplier = new FramebufferSupplier();
             private mixer : Mixer = new Mixer();
             private leftUpdate : boolean = false;
             private rightUpdate : boolean = false;
@@ -931,16 +931,6 @@ module WebDJS {
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                     this.leftVideoSupplier.bind(this.leftVideoSupplierTex);
                     
-                    this.leftFBOConnectorZeroTex = gl.createTexture();
-                    gl.bindTexture(gl.TEXTURE_2D, this.leftFBOConnectorZeroTex);        
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                    this.leftFBOConnectorZero.bind(this.leftFBOConnectorZeroTex);
-                    this.leftFBOZero = gl.createFramebuffer();
-                    this.leftFBOConnectorZero.framebuffer(this.leftFBOZero);
-                    
                     this.leftFBOConnectorOneTex = gl.createTexture();
                     gl.bindTexture(gl.TEXTURE_2D, this.leftFBOConnectorOneTex);        
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -971,11 +961,18 @@ module WebDJS {
                     this.leftFBOThree = gl.createFramebuffer();
                     this.leftFBOConnectorThree.framebuffer(this.leftFBOThree);
                     
-                    // Build left scene graph
-                    this.leftVideoSupplier.register(this.leftAffineTransform);
+                    this.leftFBOConnectorFourTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.leftFBOConnectorFourTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.leftFBOConnectorFour.bind(this.leftFBOConnectorFourTex);
+                    this.leftFBOFour = gl.createFramebuffer();
+                    this.leftFBOConnectorFour.framebuffer(this.leftFBOFour);
                     
-                    this.leftFBOConnectorZero.inlet(this.leftAffineTransform);
-                    this.leftFBOConnectorZero.register(this.leftMatrixFilterOne);
+                    // Build left scene graph
+                    this.leftVideoSupplier.register(this.leftMatrixFilterOne);
                     
                     this.leftFBOConnectorOne.inlet(this.leftMatrixFilterOne);
                     this.leftFBOConnectorOne.register(this.leftMatrixFilterTwo);
@@ -984,7 +981,10 @@ module WebDJS {
                     this.leftFBOConnectorTwo.register(this.leftRGBAFilter);
 
                     this.leftFBOConnectorThree.inlet(this.leftRGBAFilter);
-                    this.leftFBOConnectorThree.register(this.mixer.left());
+                    this.leftFBOConnectorThree.register(this.leftAffineTransform);
+                    
+                    this.leftFBOConnectorFour.inlet(this.leftAffineTransform);
+                    this.leftFBOConnectorFour.register(this.mixer.left());
 
                     this.rightVideoSupplierTex = gl.createTexture();
                     gl.bindTexture(gl.TEXTURE_2D, this.rightVideoSupplierTex);        
@@ -993,16 +993,6 @@ module WebDJS {
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                     this.rightVideoSupplier.bind(this.rightVideoSupplierTex);
-                    
-                    this.rightFBOConnectorZeroTex = gl.createTexture();
-                    gl.bindTexture(gl.TEXTURE_2D, this.rightFBOConnectorZeroTex);        
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                    this.rightFBOConnectorZero.bind(this.rightFBOConnectorZeroTex);
-                    this.rightFBOZero = gl.createFramebuffer();
-                    this.rightFBOConnectorZero.framebuffer(this.rightFBOZero);
                     
                     this.rightFBOConnectorOneTex = gl.createTexture();
                     gl.bindTexture(gl.TEXTURE_2D, this.rightFBOConnectorOneTex);        
@@ -1034,11 +1024,18 @@ module WebDJS {
                     this.rightFBOThree = gl.createFramebuffer();
                     this.rightFBOConnectorThree.framebuffer(this.rightFBOThree);
                     
-                    // Build right scene graph
-                    this.rightVideoSupplier.register(this.rightAffineTransform);
+                    this.rightFBOConnectorFourTex = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, this.rightFBOConnectorFourTex);        
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    this.rightFBOConnectorFour.bind(this.rightFBOConnectorFourTex);
+                    this.rightFBOFour = gl.createFramebuffer();
+                    this.rightFBOConnectorFour.framebuffer(this.rightFBOFour);
                     
-                    this.rightFBOConnectorZero.inlet(this.rightAffineTransform);
-                    this.rightFBOConnectorZero.register(this.rightMatrixFilterOne);
+                    // Build right scene graph
+                    this.rightVideoSupplier.register(this.rightMatrixFilterOne);
                     
                     this.rightFBOConnectorOne.inlet(this.rightMatrixFilterOne);
                     this.rightFBOConnectorOne.register(this.rightMatrixFilterTwo);
@@ -1047,26 +1044,29 @@ module WebDJS {
                     this.rightFBOConnectorTwo.register(this.rightRGBAFilter);
                     
                     this.rightFBOConnectorThree.inlet(this.rightRGBAFilter);
-                    this.rightFBOConnectorThree.register(this.mixer.right());
+                    this.rightFBOConnectorThree.register(this.rightAffineTransform);
+                    
+                    this.rightFBOConnectorFour.inlet(this.rightAffineTransform);
+                    this.rightFBOConnectorFour.register(this.mixer.right());
                 }
                 
                 if (this.leftUpdate) {
                     this.leftVideoSupplier.reload();
                     this.leftVideoSupplier.apply(gl);
-                    this.leftFBOConnectorZero.apply(gl);
                     this.leftFBOConnectorOne.apply(gl);
                     this.leftFBOConnectorTwo.apply(gl);
                     this.leftFBOConnectorThree.apply(gl);
+                    this.leftFBOConnectorFour.apply(gl);
                     this.leftUpdate = false;
                 }
                 
                 if (this.rightUpdate) {
                     this.rightVideoSupplier.reload();
                     this.rightVideoSupplier.apply(gl);
-                    this.rightFBOConnectorZero.apply(gl);
                     this.rightFBOConnectorOne.apply(gl);
                     this.rightFBOConnectorTwo.apply(gl);
                     this.rightFBOConnectorThree.apply(gl);
+                    this.rightFBOConnectorFour.apply(gl);
                     this.rightUpdate = false;
                 }
                 
