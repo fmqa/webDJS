@@ -1275,28 +1275,120 @@ module WebDJS {
 		                                this.leftRednessTo(midi.data[2] / 127);
 		                                this.ui.left.red.value = "" + (midi.data[2] * 2);
 		                                this.ui.left.redSpinner.value = "" + (midi.data[2] * 2);
-		                                break;
+		                                return;
 		                            case 49: /* G */
 		                                this.leftGreennessTo(midi.data[2] / 127);
 		                                this.ui.left.green.value = "" + (midi.data[2] * 2);
 		                                this.ui.left.greenSpinner.value = "" + (midi.data[2] * 2);
-		                                break;
+		                                return;
 		                            case 50: /* B */
 		                                this.leftBluenessTo(midi.data[2] / 127);
 		                                this.ui.left.blue.value = "" + (midi.data[2] * 2);
 		                                this.ui.left.blueSpinner.value = "" + (midi.data[2] * 2);
-		                                break;
+		                                return;
 		                        }
 		                    }
 		                    if (this.ui.right.midiActive.checked) {
 		                        console.log("Regler && Right", midi.target.name, midi.data);
 		                    }
-		                    if (midi.data[1] == 64) {
-		                        this.ui.fader.value = "" + Math.floor((midi.data[2] / 127) * 100);
-		                        this.pipe.fade(midi.data[2] / 127);
+		                    switch (midi.data[1]) {
+		                        case 64:
+		                            this.ui.fader.value = "" + Math.floor((midi.data[2] / 127) * 100);
+		                            this.pipe.fade(midi.data[2] / 127);
+		                            return;
+                                case 1:
+                                    this.volumeLeftTo(midi.data[2] / 127);
+                                    this.ui.left.volume.value = "" + Math.floor((midi.data[2] / 127) * 100);
+                                    this.ui.left.volumeSpinner.value = "" + Math.floor((midi.data[2] / 127) * 100);
+                                    return;
+                                case 2:
+                                    this.leftSpeed = (50 + (midi.data[2] / 127) * 350) / 100;
+                                    this.speedUpLeft();
+                                    this.ui.left.speed.value = "" + Math.floor(50 + (midi.data[2] / 127) * 350);
+                                    this.ui.left.speedSpinner.value = "" + Math.floor(50 + (midi.data[2] / 127) * 350);
+                                    return;
+                                case 6:
+                                    this.leftRotationTo((midi.data[2] / 127) * 360);
+                                    this.ui.left.rotationSpinner.value = "" + ((midi.data[2] / 127) * 360);
+                                    this.ui.left.rotation.value = "" + ((midi.data[2] / 127) * 360);
+                                    return;
+                                case 7:
+                                    this.pipe.scaleLeft(Math.floor(1 + (midi.data[2] / 127) * 199) / 100, Math.floor(1 + (midi.data[2] / 127) * 199) / 100);
+                                    this.ui.left.scale.value = "" + Math.floor(1 + (midi.data[2] / 127) * 199);
+                                    this.ui.left.scaleSpinner.value = "" + Math.floor(1 + (midi.data[2] / 127) * 199);
+                                    return;
 		                    }
 		                    break;
 		                case 144: /* Button Press */
+		                    if (this.ui.left.midiActive.checked) {
+		                        switch (midi.data[1]) {
+		                            case 48:
+		                                this.onLeftPlayClick();
+		                                return;
+		                            case 49:
+		                                this.onLeftStopClick();
+		                                return;
+		                        }
+		                    }
+		                    if (this.ui.right.midiActive.checked) {
+		                        switch (midi.data[1]) {
+		                            case 48:
+		                                this.onRightPlayClick();
+		                                return;
+		                            case 49:
+		                                this.onRightStopClick();
+		                                return;
+		                        }
+		                    }
+		                    switch (midi.data[1]) {
+		                        case 16:
+		                            this.ui.left.midiActive.checked = true;
+		                            return;
+		                        case 17:
+		                            this.ui.right.midiActive.checked = true;
+		                            return;
+		                        case 19:
+		                            this.ui.left.filterOne.selectedIndex = (this.ui.left.filterOne.selectedIndex + 1) % this.ui.left.filterOne.length;
+		                            this.onLeftMatrixOneChange();
+		                            return;
+		                        case 20:
+		                            this.ui.left.filterOne.selectedIndex = (((this.ui.left.filterOne.selectedIndex - 1) % 
+		                                                                     this.ui.left.filterOne.length) + this.ui.left.filterOne.length) 
+		                                                                     % this.ui.left.filterOne.length;
+		                            this.onLeftMatrixOneChange();
+		                            return;
+		                        case 23:
+		                            this.ui.left.filterTwo.selectedIndex = (this.ui.left.filterTwo.selectedIndex + 1) % this.ui.left.filterTwo.length;
+		                            this.onLeftMatrixTwoChange();
+		                            return;
+		                        case 24:
+		                            this.ui.left.filterTwo.selectedIndex = (((this.ui.left.filterTwo.selectedIndex - 1) % 
+		                                                                     this.ui.left.filterTwo.length) + this.ui.left.filterTwo.length) 
+		                                                                     % this.ui.left.filterTwo.length;
+		                            this.onLeftMatrixTwoChange();
+		                            return;
+		                        case 27:
+		                            this.ui.right.filterOne.selectedIndex = (this.ui.right.filterOne.selectedIndex + 1) % this.ui.left.filterOne.length;
+		                            this.onRightMatrixOneChange();
+		                            return;
+		                        case 28:
+		                            this.ui.right.filterOne.selectedIndex = (((this.ui.right.filterOne.selectedIndex - 1) % 
+		                                                                     this.ui.right.filterOne.length) + this.ui.right.filterOne.length) 
+		                                                                     % this.ui.right.filterOne.length;
+		                            this.onRightMatrixOneChange();
+		                            return;
+		                        case 31:
+		                            this.ui.right.filterTwo.selectedIndex = (this.ui.right.filterTwo.selectedIndex + 1) % this.ui.left.filterTwo.length;
+		                            this.onRightMatrixTwoChange();
+		                            return;
+		                        case 32:
+		                            this.ui.right.filterTwo.selectedIndex = (((this.ui.right.filterTwo.selectedIndex - 1) % 
+		                                                                     this.ui.right.filterTwo.length) + this.ui.right.filterTwo.length) 
+		                                                                     % this.ui.right.filterTwo.length;
+		                            this.onRightMatrixTwoChange();
+		                            return;
+		                        
+		                    }
 		                    console.log("Button Press", midi.target.name, midi.data);
 		                    break;
 		                case 128: /* Button Release */
@@ -1309,6 +1401,7 @@ module WebDJS {
                 }
 		    }
 		    midiDisconnect(midi : any) : void {
+		        console.log("Disconnect?!");
 		    }
 		    midiFailed(midi : any = null) : void {
 		    }
