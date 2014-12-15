@@ -1203,8 +1203,8 @@ var WebDJS;
                     _this.ui.right.playButton.value = "Play";
                 }));
                 this.ui.right.fileInput.addEventListener("change", (this.onRightFileSelect = function (evt) {
-                    if (!_this.ui.left.video.paused) {
-                        _this.ui.left.playButton.value = "Play";
+                    if (!_this.ui.right.video.paused) {
+                        _this.ui.right.playButton.value = "Play";
                     }
                     _this.ui.right.video.src = URL.createObjectURL(evt.target.files[0]);
                 }));

@@ -1539,8 +1539,8 @@ module WebDJS {
 		            this.ui.right.playButton.value = "Play";
 		        }));
 		        this.ui.right.fileInput.addEventListener("change", (this.onRightFileSelect = (evt) => {
-		            if (!this.ui.left.video.paused) {
-		                this.ui.left.playButton.value = "Play";
+		            if (!this.ui.right.video.paused) {
+		                this.ui.right.playButton.value = "Play";
 		            }
 		            this.ui.right.video.src = URL.createObjectURL(evt.target.files[0]);
 		        }));
