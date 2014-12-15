@@ -820,6 +820,8 @@ module WebDJS {
             right : ChannelUI;
             canvas : HTMLCanvasElement;
             fader : HTMLInputElement;
+            midiState : HTMLInputElement;
+            midiChoice : HTMLSelectElement;
         }
         
         export class Pipeline implements Command {
@@ -866,8 +868,6 @@ module WebDJS {
             private leftUpdate : boolean = false;
             private rightUpdate : boolean = false;
             constructor() {
-                //this.leftRGBAFilter.flipy(-1);
-                //this.rightRGBAFilter.flipy(-1);
                 this.mixer.fade(0.5);
             }
             leftInlet(l : HTMLVideoElement) : void {
@@ -1156,6 +1156,7 @@ module WebDJS {
 		    private onRightMatrixOneChange : () => void = null;
 		    private onRightMatrixTwoChange : () => void = null;
 		    private onFaderDrag : () => void = null;
+		    private onMidiStateChanged : () => void = null;
 		    private leftRedness : number = 1;
 		    private leftGreenness : number = 1;
 		    private leftBlueness : number = 1;
@@ -1168,6 +1169,7 @@ module WebDJS {
 		    private leftTranslationY : number = 0;
 		    private rightTranslationX : number = 0;
 		    private rightTranslationY : number = 0;
+		    private midiEnabled : boolean = false;
 		    constructor(ui : UI) {
 		        this.ui = ui;
 		        var glContextTypes : string[] = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"];
@@ -1243,6 +1245,72 @@ module WebDJS {
 		        if (this.leftPlaying || this.rightPlaying) {
 		            requestAnimationFrame(() => {this.update();});
 		        }
+		    }
+		    midiActivated(midi : any) : void {
+		        var inputs : any = midi.inputs();
+		        if (inputs) {
+		            for (var i = 0; i < inputs.length; i++) {
+		                var option = document.createElement("option");
+		                option.text = inputs[i].id;
+		                this.ui.midiChoice.add(option);
+		                inputs[i].addEventListener('midimessage', (event) => {this.midiMessage(event)});
+		                inputs[i].addEventListener('disconnect', (event) => {this.midiDisconnect(event)});
+		                console.log(inputs[i]); // WHAT THE FUCK?????!
+                    }
+		        }
+		    }
+		    midiMessage(midi : any) : void {
+		        if (this.ui.midiState.checked && midi.target.id == this.ui.midiChoice.value) {
+		            // Regler => 176
+		            // Knöpfe => Press: 144, Release: 128
+		            // Jogwheels: 1 (Oben Links) - 21 (Unten Rechts)
+		            // LeftBtb
+		            
+		            switch (midi.data[0]) {
+		                case 176: /* Regler */
+		                    if (this.ui.left.midiActive.checked) {
+		                        console.log("Regler && Left", midi.target.name, midi.data);
+		                        switch (midi.data[1]) {
+		                            case 48: /* R */
+		                                this.leftRednessTo(midi.data[2] / 127);
+		                                this.ui.left.red.value = "" + (midi.data[2] * 2);
+		                                this.ui.left.redSpinner.value = "" + (midi.data[2] * 2);
+		                                break;
+		                            case 49: /* G */
+		                                this.leftGreennessTo(midi.data[2] / 127);
+		                                this.ui.left.green.value = "" + (midi.data[2] * 2);
+		                                this.ui.left.greenSpinner.value = "" + (midi.data[2] * 2);
+		                                break;
+		                            case 50: /* B */
+		                                this.leftBluenessTo(midi.data[2] / 127);
+		                                this.ui.left.blue.value = "" + (midi.data[2] * 2);
+		                                this.ui.left.blueSpinner.value = "" + (midi.data[2] * 2);
+		                                break;
+		                        }
+		                    }
+		                    if (this.ui.right.midiActive.checked) {
+		                        console.log("Regler && Right", midi.target.name, midi.data);
+		                    }
+		                    if (midi.data[1] == 64) {
+		                        this.ui.fader.value = "" + Math.floor((midi.data[2] / 127) * 100);
+		                        this.pipe.fade(midi.data[2] / 127);
+		                    }
+		                    break;
+		                case 144: /* Button Press */
+		                    console.log("Button Press", midi.target.name, midi.data);
+		                    break;
+		                case 128: /* Button Release */
+		                    console.log("Button Release", midi.target.name, midi.data);
+		                    break;
+		                default:
+		                    console.log("Unbehandelt", midi.target.name, midi.data);
+		            }
+		            
+                }
+		    }
+		    midiDisconnect(midi : any) : void {
+		    }
+		    midiFailed(midi : any = null) : void {
 		    }
 		    register() : void {
 		        this.ui.left.playButton.addEventListener("click", (this.onLeftPlayClick = () => {
@@ -1484,6 +1552,12 @@ module WebDJS {
 		        this.ui.fader.addEventListener("change", (this.onFaderDrag = () => {
 		            this.pipe.fade(+this.ui.fader.value / 100);
 		        }));
+		        
+		        if ((<any>navigator).requestMIDIAccess)	{	
+                    (<any>navigator).requestMIDIAccess().then((midi) => {this.midiActivated(midi)}, (midi) => {this.midiFailed(midi)});	 
+                } else {
+                    this.midiFailed();
+                }
 		    }
 		    unregister() : void {
 		        if (this.ui.left.video.oncanplay === this.onLeftCanPlay) {

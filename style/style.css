@@ -71,3 +71,7 @@ input[type=range] {
 	border-radius: 25px;
 	height: 6px;
 }
+
+select {
+    color: black;
+}

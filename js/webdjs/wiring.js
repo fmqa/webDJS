@@ -60,7 +60,9 @@ var WebDJS;
                     resetButton: doc.getElementById("rightButtonStop")
                 },
                 canvas: doc.getElementById("canvas"),
-                fader: doc.getElementById("fadeRange")
+                fader: doc.getElementById("fadeRange"),
+                midiState: doc.getElementById("midi"),
+                midiChoice: doc.getElementById("midiChoice")
             };
         }
         Wiring.wireVJ = wireVJ;

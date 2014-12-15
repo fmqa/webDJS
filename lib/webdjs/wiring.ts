@@ -59,7 +59,9 @@ module WebDJS {
                     resetButton: <HTMLButtonElement>doc.getElementById("rightButtonStop")
                 },
                 canvas: <HTMLCanvasElement>doc.getElementById("canvas"),
-                fader: <HTMLInputElement>doc.getElementById("fadeRange")
+                fader: <HTMLInputElement>doc.getElementById("fadeRange"),
+                midiState: <HTMLInputElement>doc.getElementById("midi"),
+                midiChoice: <HTMLSelectElement>doc.getElementById("midiChoice")
             };
         }
     }
