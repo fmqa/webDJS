@@ -75,3 +75,12 @@ input[type=range] {
 select {
     color: black;
 }
+
+.hidden {
+    visibility: hidden;
+}
+
+#midiChoice {
+    min-width: 15em;
+}
+
