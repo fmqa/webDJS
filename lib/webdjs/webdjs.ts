@@ -1290,6 +1290,23 @@ module WebDJS {
 		                    }
 		                    if (this.ui.right.midiActive.checked) {
 		                        console.log("Regler && Right", midi.target.name, midi.data);
+		                        switch (midi.data[1]) {
+		                            case 48: /* R */
+		                                this.rightRednessTo(midi.data[2] / 127);
+		                                this.ui.right.red.value = "" + (midi.data[2] * 2);
+		                                this.ui.right.redSpinner.value = "" + (midi.data[2] * 2);
+		                                return;
+		                            case 49: /* G */
+		                                this.rightGreennessTo(midi.data[2] / 127);
+		                                this.ui.right.green.value = "" + (midi.data[2] * 2);
+		                                this.ui.right.greenSpinner.value = "" + (midi.data[2] * 2);
+		                                return;
+		                            case 50: /* B */
+		                                this.rightBluenessTo(midi.data[2] / 127);
+		                                this.ui.right.blue.value = "" + (midi.data[2] * 2);
+		                                this.ui.right.blueSpinner.value = "" + (midi.data[2] * 2);
+		                                return;
+		                        }
 		                    }
 		                    switch (midi.data[1]) {
 		                        case 64:
@@ -1307,6 +1324,17 @@ module WebDJS {
                                     this.ui.left.speed.value = "" + Math.floor(50 + (midi.data[2] / 127) * 350);
                                     this.ui.left.speedSpinner.value = "" + Math.floor(50 + (midi.data[2] / 127) * 350);
                                     return;
+                                case 4:
+                                    this.volumeRightTo(midi.data[2] / 127);
+                                    this.ui.right.volume.value = "" + Math.floor((midi.data[2] / 127) * 100);
+                                    this.ui.right.volumeSpinner.value = "" + Math.floor((midi.data[2] / 127) * 100);
+                                    return;
+                                case 5:
+                                    this.rightSpeed = (50 + (midi.data[2] / 127) * 350) / 100;
+                                    this.speedUpRight();
+                                    this.ui.right.speed.value = "" + Math.floor(50 + (midi.data[2] / 127) * 350);
+                                    this.ui.right.speedSpinner.value = "" + Math.floor(50 + (midi.data[2] / 127) * 350);
+                                    return;
                                 case 6:
                                     this.leftRotationTo((midi.data[2] / 127) * 360);
                                     this.ui.left.rotationSpinner.value = "" + ((midi.data[2] / 127) * 360);
@@ -1316,6 +1344,16 @@ module WebDJS {
                                     this.pipe.scaleLeft(Math.floor(1 + (midi.data[2] / 127) * 199) / 100, Math.floor(1 + (midi.data[2] / 127) * 199) / 100);
                                     this.ui.left.scale.value = "" + Math.floor(1 + (midi.data[2] / 127) * 199);
                                     this.ui.left.scaleSpinner.value = "" + Math.floor(1 + (midi.data[2] / 127) * 199);
+                                    return;
+                                case 8:
+                                    this.rightRotationTo((midi.data[2] / 127) * 360);
+                                    this.ui.right.rotationSpinner.value = "" + ((midi.data[2] / 127) * 360);
+                                    this.ui.right.rotation.value = "" + ((midi.data[2] / 127) * 360);
+                                    return;
+                                case 9:
+                                    this.pipe.scaleRight(Math.floor(1 + (midi.data[2] / 127) * 199) / 100, Math.floor(1 + (midi.data[2] / 127) * 199) / 100);
+                                    this.ui.right.scale.value = "" + Math.floor(1 + (midi.data[2] / 127) * 199);
+                                    this.ui.right.scaleSpinner.value = "" + Math.floor(1 + (midi.data[2] / 127) * 199);
                                     return;
 		                    }
 		                    break;
